@@ -1,0 +1,8 @@
+﻿  comic.c
+C:\Users\Felix\Documents\git\captain_comic\comic.c(77,33): warning C4244: "Funktion": Konvertierung von "double" in "Uint32", möglicher Datenverlust
+C:\Users\Felix\Documents\git\captain_comic\comic.c(677,1): warning C4244: "Initialisierung": Konvertierung von "uint16_t" in "uint8_t", möglicher Datenverlust
+C:\Users\Felix\Documents\git\captain_comic\comic.c(906,17): warning C4267: "Funktion": Konvertierung von "size_t" nach "uint16_t", Datenverlust möglich
+C:\Users\Felix\Documents\git\captain_comic\comic.c(906,29): warning C4267: "Funktion": Konvertierung von "size_t" nach "uint16_t", Datenverlust möglich
+C:\Users\Felix\Documents\git\captain_comic\comic.c(1780,28): warning C4267: "Funktion": Konvertierung von "size_t" nach "uint8_t", Datenverlust möglich
+MSVCRTD.lib(exe_main.obj) : error LNK2019: Verweis auf nicht aufgelöstes externes Symbol "_main" in Funktion ""int __cdecl invoke_main(void)" (?invoke_main@@YAHXZ)".
+C:\Users\Felix\Documents\git\captain_comic\Debug\captain_comic.exe : fatal error LNK1120: 1 nicht aufgelöste Externe
