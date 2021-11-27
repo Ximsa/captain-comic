@@ -37,17 +37,17 @@ uint8_t current_level_number	=	LEVEL_NUMBER_FOREST;
 uint8_t current_stage_number	=	0;
 uint8_t comic_y			=	0;
 uint8_t comic_x			=	0;
-uint16_t camera_x		=	0;
+int16_t camera_x		=	0;
 uint8_t comic_num_lives		=	0;
 uint8_t comic_hp		=	0;
 uint8_t comic_firepower		=	0;// how many Blastola Colas Comic has collected
 uint8_t fireball_meter		=	0;
 uint8_t comic_jump_power	=	4;
-uint8_t comic_has_corkscrew	=	0;
-uint8_t comic_has_door_key	=	0;
-uint8_t comic_has_lantern	=	0;
-uint8_t comic_has_teleport_wand	=	0;
-uint8_t comic_num_treasures	=	0;
+uint8_t comic_has_corkscrew	=	1; // TODO: reset to 0
+uint8_t comic_has_door_key	=	1;
+uint8_t comic_has_lantern	=	1;
+uint8_t comic_has_teleport_wand	=	1;
+uint8_t comic_num_treasures	=	1;
 
 // The score is an array of 3 bytes, stored in base-100 representation. score[0]
 // is the least significant digit. The number stored here one one-hundredth of

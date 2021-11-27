@@ -16,9 +16,10 @@ SDL_Palette * palette = NULL;
 
 uint8_t screen_buffer[SCREEN_WIDTH*SCREEN_HEIGHT*4];
 uint8_t ega_buffer[SCREEN_WIDTH*SCREEN_HEIGHT/2];
-Uint8 audio_buffer[SOUND_MAX_LENGTH * SAMPLE_RATE];
+Uint16 audio_buffer[SOUND_MAX_LENGTH * SAMPLE_RATE * sizeof(Uint16)];
 void award_extra_life(uint8_t sound);
 void load_new_stage();
+void load_new_level();
 size_t file_size(FILE * f)
 {
   fseek (f , 0 , SEEK_END);
@@ -37,7 +38,7 @@ void draw()
     }
 }
 
-#define PLAY_SOUND(sound) play_sound(sound,sizeof(sound));
+#define PLAY_SOUND(sound) play_sound(sound,sizeof(sound))
 void play_sound(uint16_t sound[][2], size_t sound_size)
 {
   if(sound_enabled)
@@ -49,7 +50,7 @@ void play_sound(uint16_t sound[][2], size_t sound_size)
       for (size_t note_counter = sound[note][1] * SAMPLE_RATE / 18; i < buffer_length; i++, note_counter--)
 	{
 	  double frequency = (double)SOUND_MAX_FREQ / (double)sound[note][0];
-	  audio_buffer[i] = ((size_t)(i * frequency * 2.0 / SAMPLE_RATE) % 2)*64;
+	  audio_buffer[i] = ((size_t)(i * frequency * 2.0 / SAMPLE_RATE) % 2)*8196;
 	  if (note_counter == 0)
 	    {
 	      note++;
@@ -57,7 +58,7 @@ void play_sound(uint16_t sound[][2], size_t sound_size)
 	    }
 	}
       SDL_ClearQueuedAudio(dev);
-      SDL_QueueAudio(dev, audio_buffer, sizeof(Uint8) * i);
+      SDL_QueueAudio(dev, audio_buffer, sizeof(Uint16) * i);
     }
 }
 
@@ -83,7 +84,7 @@ void init_sound()
   SDL_AudioSpec audio_want =
     {
       .freq = SAMPLE_RATE, // number of samples per second
-      .format = AUDIO_U8, // sample type (here: unsigned short 8 bit)
+      .format = AUDIO_U16, // sample type (here: unsigned short 16 bit)
       .channels = 1,
       .samples = SAMPLE_RATE / 12, // buffer-size (1/12s)
       .callback = NULL,	// function SDL calls periodically to refill the buffer
@@ -126,7 +127,7 @@ void load_EGA(uint8_t * filename_and_buffer, size_t rgb_size) // loads and conve
   EGA_to_32(ega_size, plane_size, ega_buffer, filename_and_buffer);
 }
 
-#define INIT_GRAPHIC(graphic) load_EGA(graphic, sizeof(graphic));
+#define INIT_GRAPHIC(graphic) load_EGA(graphic, sizeof(graphic))
 #define INIT_GRAPHICS(graphics) for(size_t i = 0; i < sizeof(graphics) / sizeof(graphics[0]); i++) INIT_GRAPHIC(graphics[i]);
 void init_graphics() // fills every GRAPHIC* structure with pixel values
 {
@@ -673,7 +674,7 @@ void handle_teleport()
 void begin_teleport()
 {
   teleport_camera_counter = 0;
-  uint8_t camera_rel_comic = comic_x-camera_x;
+  int8_t camera_rel_comic = comic_x-camera_x;
   uint8_t camera_x_mod = camera_x;
   uint8_t destination_x = comic_x;
   uint8_t destination_y = comic_y;
@@ -768,7 +769,7 @@ void begin_teleport()
   teleport_source_y = comic_y;
   comic_is_teleporting = 1;
   PLAY_SOUND(SOUND_TELEPORT);
-  printf("%i %i -> %i %i\n", teleport_source_x, teleport_source_y, teleport_destination_x, teleport_destination_y);
+  //printf("%i %i -> %i %i\n", teleport_source_x, teleport_source_y, teleport_destination_x, teleport_destination_y);
 } 
 
 // Play the animation of Comic dying from taking damage.
@@ -1050,8 +1051,36 @@ void handle_fireballs()
 { // TODO: finish
 }
 
-void activate_door()
-{ // TODO: finish
+
+// Go through the door pointed to by bx. Call enter_door, then load_new_level or
+// load_new_level as appropriate.
+// Input:
+//   bx = pointer to door struct
+//   current_level_number, current_stage_number = where the door is located
+// Output:
+//   current_level_number, current_stage_number = target of the door
+//   source_door_level_number = former current_level_number
+//   source_door_stage_number = former current_stage_number
+void activate_door(door source_door)
+{
+  comic_x = source_door.x+1;
+  comic_y = source_door.y;
+  enter_door();
+  // Mark that we're entering the new level/stage via a door.
+  source_door_level_number = current_level_number;
+  source_door_stage_number = current_stage_number;
+  // Set the current level/stage to wherever the door leads.
+  current_stage_number = source_door.target_stage;
+  current_level_number = source_door.target_level;
+  // it it another stage in the same level?
+  if(current_level_number == source_door_level_number)
+    {
+      load_new_stage();
+    }
+  else
+    {
+      load_new_level();
+    }
 }
 
 void comic_dies()
@@ -1496,8 +1525,8 @@ void game_loop()
 		     comic_x - door_x <= 2 &&
 		     comic_has_door_key) // Pressing the open key, in front of a door, but do we have the Door Key?
 		    {
-		      activate_door(); //tail call; activate_door calls load_new_level or load_new_stage, which jump back into game_loop
-		      return; // TODO: check if ok
+		      activate_door(current_stage.doors[door_id]); //tail call; activate_door calls load_new_level or load_new_stage, which jump back into game_loop
+		      //return; // TODO: check if ok
 		    }
 		}
 	    }
@@ -1645,7 +1674,7 @@ void load_new_stage()
    comic_y = comic_y_checkpoint;
 
    // Set camera_x = clamp(comic_x - 1 - PLAYFIELD_WIDTH/2, 0, MAP_WIDTH - PLAYFIELD_WIDTH)
-   camera_x = comic_x - (PLAYFIELD_WIDTH-2)/2;
+   camera_x = comic_x - 1 - PLAYFIELD_WIDTH/2;
    if(camera_x < 0) camera_x = 0;
    else if(camera_x > MAP_WIDTH - PLAYFIELD_WIDTH) camera_x = MAP_WIDTH - PLAYFIELD_WIDTH;
 
@@ -1818,7 +1847,6 @@ void load_new_level()
      }
    // load pt files ; Load the three .PT files for this level.
    f = fopen(current_level.pt0_filename, "rb"); // PT0
-   wait_keypress();
    fread(pt0_raw, 1, file_size(f), f);
    fclose(f);
    pt0.width = *(((uint16_t*)pt0_raw) + 0);
@@ -1837,7 +1865,6 @@ void load_new_level()
    pt2.height = *(((uint16_t*)pt2_raw) + 1);
    pt2.tiles = pt2_raw + 2*2;
    // load shp files
-   printf("loading shp");
    load_shp_files();
  }
 
@@ -1847,7 +1874,6 @@ int main(int argc, char * argv[])
   
   if(graphics_enabled) init_UI();
   if(sound_enabled) init_sound();
-  wait_keypress();
   if(graphics_enabled || sound_enabled) title_sequence();
   initialize_lives_sequence();
   load_new_level();
