@@ -1047,182 +1047,6 @@ void stage_edge_transition(uint8_t stage_index)
   load_new_stage();
 }
 
-void handle_fireballs()
-{ // TODO: finish
-}
-
-
-// Go through the door pointed to by bx. Call enter_door, then load_new_level or
-// load_new_level as appropriate.
-// Input:
-//   bx = pointer to door struct
-//   current_level_number, current_stage_number = where the door is located
-// Output:
-//   current_level_number, current_stage_number = target of the door
-//   source_door_level_number = former current_level_number
-//   source_door_stage_number = former current_stage_number
-void activate_door(door source_door)
-{
-  comic_x = source_door.x+1;
-  comic_y = source_door.y;
-  enter_door();
-  // Mark that we're entering the new level/stage via a door.
-  source_door_level_number = current_level_number;
-  source_door_stage_number = current_stage_number;
-  // Set the current level/stage to wherever the door leads.
-  current_stage_number = source_door.target_stage;
-  current_level_number = source_door.target_level;
-  // it it another stage in the same level?
-  if(current_level_number == source_door_level_number)
-    {
-      load_new_stage();
-    }
-  else
-    {
-      load_new_level();
-    }
-}
-
-void comic_dies()
-{ // TODO: finish
-}
-
-// Handle Comic movement when comic_is_falling_or_jumping == 1. Apply upward
-// acceleration due to jumping, apply downward acceleration due to gravity,
-// check for solid ground, and handle midair left/right movement.
-// Input:
-//   si = coordinates of Comic
-//   key_state_left, key_state_right, key_state_jump = state of inputs
-//   current_level_number = if LEVEL_NUMBER_SPACE, use lower gravity
-//   comic_jump_counter = how many ticks Comic can continue moving upward
-//   comic_x_momentum = Comic's current x momentum
-//   comic_y_vel = Comic's current y velocity, in units of 1/8 game units per tick
-//   comic_facing = COMIC_FACING_RIGHT or COMIC_FACING_LEFT
-// Output:
-//   si = updated coordinates of Comic
-//   comic_is_falling_or_jumping = updated
-//   comic_jump_counter = decremented by 1 unless already at 1
-//   comic_x_momentum = updated
-//   comic_y_vel = updated
-//   comic_facing = updated
-void handle_fall_or_jump(uint8_t jump_key_pressed, uint8_t left_key_pressed, uint8_t right_key_pressed)
-{
-  // Are we still in the state where a jump can continue accelerating
-  // upward? When comic_jump_counter is 1, the upward part of the jump is
-  // over.
-  comic_jump_counter--;
-  if(comic_jump_counter == 0)
-    { // when it hits bottom, this jump can no longer accelerate upward
-      // The upward part of the jump is over (comic_jump_counter was 1 when
-      // the function was called, and just became 0). Clamp it to a minimum
-      // value of 1.
-      comic_jump_counter++;
-    }
-  else
-    { // We're still able to accelerate upward in this jump. Is the jump key
-      // still being pressed?
-      if(jump_key_pressed)
-	{ // We're still accelerating upward in this jump. Subtract a fixed value
-	  // from the vertical velocity.
-	  comic_y_vel -= 7;
-	}
-    }
-  comic_y += comic_y_vel / 8;
-  if(comic_y < 0) // did comic_y just become negative (above the top of the screen)?
-    {
-      comic_y = 0; //  clip to the top of the screen
-    }
-  // Is the top of Comic's head within 3 units of the bottom of the screen
-  // (i.e., his feet are below the bottom of the screen)?
-  if(comic_y < PLAYFIELD_HEIGHT - 3)
-    { // if so, it's a death by falling
-      comic_dies();
-    }
-  // apply gravity
-  if(current_level_number == LEVEL_NUMBER_SPACE)
-    { // if so, low gravity.
-      comic_y_vel -= COMIC_GRAVITY - COMIC_GRAVITY_SPACE;
-    }
-  comic_y_vel += COMIC_GRAVITY;
-  // Clip downward velocity.
-  if(comic_y_vel > TERMINAL_VELOCITY)
-    comic_y_vel = TERMINAL_VELOCITY;
-  // Adjust comic_x_momentum based on left/right inputs.
-  // TODO: finish
-
-  // check solidity_upward
-  // While moving upward, we check the solidity of the tile Comic's head
-  // is in. While moving downward, we instead check the solidity of the
-  // tile under his feet.
-  if(is_solid(comic_x, comic_y))
-    {
-      if(comic_x % 2 == 1) // is Comic halfway between two tiles (comic_x is odd)?
-	{ // if so, also check the solidity of the tile 1 to right
-	  if(is_solid(comic_x+1, comic_y))
-	    { // bounce downward off the ceiling
-	      comic_y_vel = 8;
-	    }
-	}
-      else
-	{
-	  comic_y_vel = 8;
-	}
-    }
-  // check_solidity_downward:
-  // Are we even moving downward?
-  if(comic_y_vel > 0)
-    {
-      if(is_solid(comic_x, comic_y + 5))
-	{
-	  if(comic_x % 2 == 1) // is Comic halfway between two tiles (comic_x is odd)?
-	    { // if so, also check the solidity of the tile 1 to right
-	      if(is_solid(comic_x+1, comic_y + 5))
-		{ // bounce downward off the ceiling
-		  goto hit_the_ground;
-		}
-	    }
-	  else
-	    {
-	      goto hit_the_ground;
-	    }
-	}
-    }
- still_falling_or_jumping:
-  comic_animation = COMIC_JUMPING;
-  return;
- hit_the_ground:
-  // Above, under .check_solidity_downward, we checked the tile at
-  // (comic_x, comic_y + 5) and found it to be solid. But if comic_y is 15
-  // or greater (i.e., comic_y + 5 is 20 or greater), that tile lookup
-  // actually looked at garbage data outside the map. Override the earlier
-  // decision and act as if the tile had not been solid, because there can
-  // be nothing solid below the bottom of the map.
-  if(comic_y < PLAYFIELD_HEIGHT - 5)
-    { // Now we actually are about to hit the ground. Clamp Comic's feet to an
-      // even tile boundary and reset his vertical velocity to 0.
-      comic_y++;
-      comic_y = comic_y & 0xFE;
-      comic_is_falling_or_jumping = 0;
-      comic_y_vel = 0;
-    }
-  else
-    {
-      goto still_falling_or_jumping;
-    }
-}
-
-void increment_fireball_meter()
-{ // TODO: finish
-}
-
-void decrement_fireball_meter()
-{ // TODO: finish
-}
-
-void try_to_fire()
-{ // TODO: finish
-  
-}
 
 // Move Comic to the left if possible. If hitting a stage edge, jump to
 // stage_edge_transition.
@@ -1387,6 +1211,206 @@ void face_or_move_right()
     }
 }
 
+void handle_fireballs()
+{ // TODO: finish
+}
+
+
+// Go through the door pointed to by bx. Call enter_door, then load_new_level or
+// load_new_level as appropriate.
+// Input:
+//   bx = pointer to door struct
+//   current_level_number, current_stage_number = where the door is located
+// Output:
+//   current_level_number, current_stage_number = target of the door
+//   source_door_level_number = former current_level_number
+//   source_door_stage_number = former current_stage_number
+void activate_door(door source_door)
+{
+  comic_x = source_door.x+1;
+  comic_y = source_door.y;
+  enter_door();
+  // Mark that we're entering the new level/stage via a door.
+  source_door_level_number = current_level_number;
+  source_door_stage_number = current_stage_number;
+  // Set the current level/stage to wherever the door leads.
+  current_stage_number = source_door.target_stage;
+  current_level_number = source_door.target_level;
+  // it it another stage in the same level?
+  if(current_level_number == source_door_level_number)
+    {
+      load_new_stage();
+    }
+  else
+    {
+      load_new_level();
+    }
+}
+
+void comic_dies()
+{ // TODO: finish
+}
+
+// Handle Comic movement when comic_is_falling_or_jumping == 1. Apply upward
+// acceleration due to jumping, apply downward acceleration due to gravity,
+// check for solid ground, and handle midair left/right movement.
+// Input:
+//   si = coordinates of Comic
+//   key_state_left, key_state_right, key_state_jump = state of inputs
+//   current_level_number = if LEVEL_NUMBER_SPACE, use lower gravity
+//   comic_jump_counter = how many ticks Comic can continue moving upward
+//   comic_x_momentum = Comic's current x momentum
+//   comic_y_vel = Comic's current y velocity, in units of 1/8 game units per tick
+//   comic_facing = COMIC_FACING_RIGHT or COMIC_FACING_LEFT
+// Output:
+//   si = updated coordinates of Comic
+//   comic_is_falling_or_jumping = updated
+//   comic_jump_counter = decremented by 1 unless already at 1
+//   comic_x_momentum = updated
+//   comic_y_vel = updated
+//   comic_facing = updated
+void handle_fall_or_jump(uint8_t jump_key_pressed, uint8_t left_key_pressed, uint8_t right_key_pressed)
+{
+  // Are we still in the state where a jump can continue accelerating
+  // upward? When comic_jump_counter is 1, the upward part of the jump is
+  // over.
+  //  comic_jump_counter--;
+  if(comic_jump_counter == 0)
+    { // when it hits bottom, this jump can no longer accelerate upward
+      // The upward part of the jump is over (comic_jump_counter was 1 when
+      // the function was called, and just became 0). Clamp it to a minimum
+      // value of 1.
+      comic_jump_counter++;
+    }
+  else
+    { // We're still able to accelerate upward in this jump. Is the jump key
+      // still being pressed?
+      if(jump_key_pressed)
+	{ // We're still accelerating upward in this jump. Subtract a fixed value
+	  // from the vertical velocity.
+	  comic_y_vel -= 7;
+	}
+    }
+  // integrate_vel
+  comic_y += comic_y_vel / 8;
+  if(comic_y < 0) // did comic_y just become negative (above the top of the screen)?
+    {
+      comic_y = 0; //  clip to the top of the screen
+    }
+  // Is the top of Comic's head within 3 units of the bottom of the screen
+  // (i.e., his feet are below the bottom of the screen)?
+  if(comic_y < PLAYFIELD_HEIGHT - 3)
+    { // if so, it's a death by falling
+      comic_dies();
+    }
+  // apply gravity
+  if(current_level_number == LEVEL_NUMBER_SPACE)
+    { // if so, low gravity.
+      comic_y_vel -= COMIC_GRAVITY - COMIC_GRAVITY_SPACE;
+    }
+  comic_y_vel += COMIC_GRAVITY;
+  // Clip downward velocity.
+  if(comic_y_vel > TERMINAL_VELOCITY)
+    comic_y_vel = TERMINAL_VELOCITY;
+  // Adjust comic_x_momentum based on left/right inputs.
+  if(left_key_pressed)
+    {
+      comic_facing = COMIC_FACING_LEFT; // immediately face left when in the air
+      comic_x_momentum--; // decrement horizontal momentum
+      if(comic_x_momentum < -5) comic_x_momentum = -5; // clamp momentum to not go below -5
+    }
+  
+  if(right_key_pressed)
+    {
+      comic_facing = COMIC_FACING_RIGHT; // immediately face right when in the air
+      comic_x_momentum++; // increment horizontal momentum
+      if(comic_x_momentum > 5) comic_x_momentum = 5; // clamp momentum to not go above 5
+    }
+  // check move left
+  if(comic_x_momentum < 0)
+    {
+      comic_x_momentum++; // drag momentum towards 0
+      move_left();
+    }
+  if(comic_x_momentum > 0)
+    {
+      comic_x_momentum--; // drag momentum towards 0
+      move_right();
+    }
+  // check solidity_upward
+  // While moving upward, we check the solidity of the tile Comic's head
+  // is in. While moving downward, we instead check the solidity of the
+  // tile under his feet.
+  if(is_solid(comic_x, comic_y))
+    {
+      if(comic_x % 2 == 1) // is Comic halfway between two tiles (comic_x is odd)?
+	{ // if so, also check the solidity of the tile 1 to right
+	  if(is_solid(comic_x+1, comic_y))
+	    { // bounce downward off the ceiling
+	      comic_y_vel = 8;
+	    }
+	}
+      else
+	{
+	  comic_y_vel = 8;
+	}
+    }
+  // check_solidity_downward:
+  // Are we even moving downward?
+  if(comic_y_vel > 0)
+    {
+      if(is_solid(comic_x, comic_y + 5))
+	{
+	  if(comic_x % 2 == 1) // is Comic halfway between two tiles (comic_x is odd)?
+	    { // if so, also check the solidity of the tile 1 to right
+	      if(is_solid(comic_x+1, comic_y + 5))
+		{ // bounce downward off the ceiling
+		  goto hit_the_ground;
+		}
+	    }
+	  else
+	    {
+	      goto hit_the_ground;
+	    }
+	}
+    }
+ still_falling_or_jumping:
+  comic_animation = COMIC_JUMPING;
+  return;
+ hit_the_ground:
+  // Above, under .check_solidity_downward, we checked the tile at
+  // (comic_x, comic_y + 5) and found it to be solid. But if comic_y is 15
+  // or greater (i.e., comic_y + 5 is 20 or greater), that tile lookup
+  // actually looked at garbage data outside the map. Override the earlier
+  // decision and act as if the tile had not been solid, because there can
+  // be nothing solid below the bottom of the map.
+  if(comic_y < PLAYFIELD_HEIGHT - 5)
+    { // Now we actually are about to hit the ground. Clamp Comic's feet to an
+      // even tile boundary and reset his vertical velocity to 0.
+      comic_y++;
+      comic_y = comic_y & 0xFE;
+      comic_is_falling_or_jumping = 0;
+      comic_y_vel = 0;
+    }
+  else
+    {
+      goto still_falling_or_jumping;
+    }
+}
+
+void increment_fireball_meter()
+{ // TODO: finish
+}
+
+void decrement_fireball_meter()
+{ // TODO: finish
+}
+
+void try_to_fire()
+{ // TODO: finish
+  
+}
+
 // Main game loop. Block until it's time for a game tick, do one tick's worth of
 // game logic, then repeat. When win_counter reaches 1, jump to
 // game_end_sequence.
@@ -1405,17 +1429,17 @@ void face_or_move_right()
 void game_loop()
 {
   SDL_Event event;
+  uint8_t jump_key_pressed = 0;
+  uint8_t open_key_pressed = 0;
+  uint8_t teleport_key_pressed = 0;
+  uint8_t left_key_pressed = 0;
+  uint8_t right_key_pressed = 0;
+  uint8_t pause_key_pressed = 0;
+  uint8_t fire_key_pressed = 0;
   while(1)
     {
       wait_n_ticks(1);
       // poll keyboard events
-      uint8_t jump_key_pressed = 0;
-      uint8_t open_key_pressed = 0;
-      uint8_t teleport_key_pressed = 0;
-      uint8_t left_key_pressed = 0;
-      uint8_t right_key_pressed = 0;
-      uint8_t pause_key_pressed = 0;
-      uint8_t fire_key_pressed = 0;
       while(SDL_PollEvent(&event))
 	{
 	  
@@ -1455,8 +1479,44 @@ void game_loop()
 		default: break;
 		}
 	    }
+	  else if(event.type == SDL_KEYUP)
+	    {
+	      switch(event.key.keysym.scancode)
+		{
+		case SDL_SCANCODE_SPACE:
+		case SDL_SCANCODE_W:
+		case SDL_SCANCODE_UP:
+		  jump_key_pressed = 0;
+		  break;
+		case SDL_SCANCODE_RALT:
+		case SDL_SCANCODE_LALT:
+		  open_key_pressed = 0;
+		  break;
+		case SDL_SCANCODE_RSHIFT:
+		case SDL_SCANCODE_LSHIFT:
+		  teleport_key_pressed = 0;
+		  break;
+		case SDL_SCANCODE_A:
+		case SDL_SCANCODE_LEFT:
+		  left_key_pressed = 0;
+		  break;
+		case SDL_SCANCODE_D:
+		case SDL_SCANCODE_RIGHT:
+		  right_key_pressed = 0;
+		  break;
+		case SDL_SCANCODE_PAUSE:
+		case SDL_SCANCODE_ESCAPE:
+		  pause_key_pressed = 0;
+		  break;
+		case SDL_SCANCODE_0:
+		case SDL_SCANCODE_INSERT:
+		  fire_key_pressed = 0;
+		  break;
+		default: break;
+		}
+	    }
 	}
-      
+      printf("%i\n",jump_key_pressed);
       // tick
       // If win_counter is nonzero, we are waiting out the clock to start the
       // game end sequence. The game ends when win_counter decrements to 1.
