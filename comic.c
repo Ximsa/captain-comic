@@ -1429,13 +1429,13 @@ void try_to_fire()
 void game_loop()
 {
   SDL_Event event;
-  uint8_t jump_key_pressed = 0;
-  uint8_t open_key_pressed = 0;
-  uint8_t teleport_key_pressed = 0;
-  uint8_t left_key_pressed = 0;
-  uint8_t right_key_pressed = 0;
-  uint8_t pause_key_pressed = 0;
-  uint8_t fire_key_pressed = 0;
+  static uint8_t jump_key_pressed = 0; // keep values between recursive calls
+  static uint8_t open_key_pressed = 0;
+  static uint8_t teleport_key_pressed = 0;
+  static uint8_t left_key_pressed = 0;
+  static uint8_t right_key_pressed = 0;
+  static uint8_t pause_key_pressed = 0;
+  static uint8_t fire_key_pressed = 0;
   while(1)
     {
       wait_n_ticks(1);
