@@ -1,8 +1,8 @@
 ﻿  comic.c
-C:\Users\Felix\Documents\git\captain-comic\comic.c(61,59): warning C4267: "Funktion": Konvertierung von "size_t" nach "Uint32", Datenverlust möglich
-C:\Users\Felix\Documents\git\captain-comic\comic.c(78,33): warning C4244: "Funktion": Konvertierung von "double" in "Uint32", möglicher Datenverlust
-C:\Users\Felix\Documents\git\captain-comic\comic.c(678,1): warning C4244: "Initialisierung": Konvertierung von "int16_t" in "uint8_t", möglicher Datenverlust
-C:\Users\Felix\Documents\git\captain-comic\comic.c(907,17): warning C4267: "Funktion": Konvertierung von "size_t" nach "uint16_t", Datenverlust möglich
-C:\Users\Felix\Documents\git\captain-comic\comic.c(907,29): warning C4267: "Funktion": Konvertierung von "size_t" nach "uint16_t", Datenverlust möglich
-C:\Users\Felix\Documents\git\captain-comic\comic.c(1869,28): warning C4267: "Funktion": Konvertierung von "size_t" nach "uint8_t", Datenverlust möglich
+C:\Users\Felix\Documents\git\captain-comic\comic.c(64,59): warning C4267: "Funktion": Konvertierung von "size_t" nach "Uint32", Datenverlust möglich
+C:\Users\Felix\Documents\git\captain-comic\comic.c(81,33): warning C4244: "Funktion": Konvertierung von "double" in "Uint32", möglicher Datenverlust
+C:\Users\Felix\Documents\git\captain-comic\comic.c(688,1): warning C4244: "Initialisierung": Konvertierung von "int16_t" in "uint8_t", möglicher Datenverlust
+C:\Users\Felix\Documents\git\captain-comic\comic.c(917,17): warning C4267: "Funktion": Konvertierung von "size_t" nach "uint16_t", Datenverlust möglich
+C:\Users\Felix\Documents\git\captain-comic\comic.c(917,29): warning C4267: "Funktion": Konvertierung von "size_t" nach "uint16_t", Datenverlust möglich
+C:\Users\Felix\Documents\git\captain-comic\comic.c(1855,28): warning C4267: "Funktion": Konvertierung von "size_t" nach "uint8_t", Datenverlust möglich
   captain_comic.vcxproj -> C:\Users\Felix\Documents\git\captain-comic\x64\Debug\captain_comic.exe

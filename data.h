@@ -42,7 +42,7 @@ uint8_t comic_num_lives		=	0;
 uint8_t comic_hp		=	0;
 uint8_t comic_firepower		=	0;// how many Blastola Colas Comic has collected
 uint8_t fireball_meter		=	0;
-uint8_t comic_jump_power	=	4;
+uint8_t comic_jump_power	=	4;//4;
 uint8_t comic_has_corkscrew	=	1; // TODO: reset to 0
 uint8_t comic_has_door_key	=	1;
 uint8_t comic_has_lantern	=	1;
@@ -60,7 +60,7 @@ uint8_t score_10000_counter	=	0;
 // elements in each row are used.)
 uint8_t items_collected[16*3]	=	{0};
 
-#define STARTUP_NOTICE_TEXT "The Adventures of Captain Comic\r\nCopyright (c) 1988 by Michael Denio\r\n"
+#define STARTUP_NOTICE_TEXT "The Adventures of Captain Comic"/*\r\nCopyright (c) 1988 by Michael Denio\r\n"*/
 
 #define TERMINATE_PROGRAM_TEXT ""
 
@@ -680,7 +680,7 @@ uint16_t SOUND_EXTRA_LIFE[][2] =
 uint8_t comic_run_cycle		= 0;
 uint8_t comic_is_falling_or_jumping	= 0;	// 0 when Comic is on the ground, 1 when falling or jumping
 uint8_t comic_is_teleporting	= 0;
-uint8_t comic_x_momentum	= 0;	// ranges from -5 to +5.
+int8_t comic_x_momentum	= 0;	// ranges from -5 to +5.
 int8_t comic_y_vel		= 0;	// fixed-point fractional value in units of 1/8 game units (1/16 tile or 1 pixel) per tick
 uint8_t comic_jump_counter	= 0;	// a jump stops moving upwards when this counter decrements to 1
 uint8_t comic_facing		= COMIC_FACING_RIGHT;

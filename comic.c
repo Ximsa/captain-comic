@@ -5,6 +5,7 @@
 #include <SDL2/SDL_audio.h>
 #include <stdint.h>
 #include <stdio.h>
+#include <time.h>
 #include "data.h"
 #include "constants.h"
 
@@ -13,6 +14,8 @@ SDL_Window * win = NULL;
 SDL_Renderer * renderer = NULL;
 SDL_Texture * texture = NULL;
 SDL_Palette * palette = NULL;
+int comic_quit = 0;
+
 
 uint8_t screen_buffer[SCREEN_WIDTH*SCREEN_HEIGHT*4];
 uint8_t ega_buffer[SCREEN_WIDTH*SCREEN_HEIGHT/2];
@@ -118,7 +121,9 @@ void EGA_to_32(size_t size_ega, size_t planes, uint8_t * buf_ega, uint8_t * buf_
 void load_EGA(uint8_t * filename_and_buffer, size_t rgb_size) // loads and converts a imagefile
 {
   size_t plane_size = 5;
-  if (rgb_size == SCREEN_WIDTH * SCREEN_HEIGHT * 4) plane_size = 4;
+  if (rgb_size == SCREEN_WIDTH * SCREEN_HEIGHT * 4
+      || rgb_size == 8 * 16 * 4)
+    plane_size = 4;
   FILE * f = fopen((char*)filename_and_buffer, "rb");
   size_t ega_size = rgb_size * plane_size / 32; // TODO: check for rounding errors
   fread(ega_buffer, 1, ega_size, f);
@@ -214,7 +219,7 @@ void init_UI()
 			 SCREEN_WIDTH*4,
 			 200*4,
 			 SDL_WINDOW_RESIZABLE);
-  renderer = SDL_CreateRenderer(win, -1, SDL_RENDERER_SOFTWARE);
+  renderer = SDL_CreateRenderer(win, -1, SDL_RENDERER_ACCELERATED);
   SDL_RenderSetLogicalSize(renderer, SCREEN_WIDTH, SCREEN_HEIGHT);
   texture = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_RGBA32, SDL_TEXTUREACCESS_STREAMING, SCREEN_WIDTH, 200);
   init_graphics();
@@ -326,7 +331,7 @@ void initialize_lives_sequence()
 }
 
 void title_sequence()
-{
+{/*
   PLAY_SOUND(SOUND_TITLE);
   blit_to_screen(0,0,SCREEN_WIDTH, SCREEN_HEIGHT, TITLE_GRAPHIC);
   draw();
@@ -336,7 +341,7 @@ void title_sequence()
   wait_keypress();
   blit_to_screen(0,0,SCREEN_WIDTH, SCREEN_HEIGHT, ITEMS_GRAPHIC);
   draw();
-  wait_keypress();
+  wait_keypress();*/
   SDL_ClearQueuedAudio(dev);
   blit_to_screen(0,0,SCREEN_WIDTH, SCREEN_HEIGHT, UI_GRAPHIC);
   draw();
@@ -407,6 +412,7 @@ void blit_comic_playfield_offscreen()
 //   offscreen_video_buffer_ptr = whichever of video buffers 0x0000 or 0x2000 is not on screen at the moment // NOTE: unused
 void blit_map_playfield_offscreen()
 {
+  printf("camera_x: %i\t comic_x: %i\ttiles_width: %i\tjump power: %i\ty-vel: %i\n", camera_x, comic_x, MAP_WIDTH_TILES,comic_jump_counter,comic_y_vel);
   blit(PLAYFIELD_WIDTH * 8, PLAYFIELD_HEIGHT * 8, // width and height
        camera_x * 8, 0, // source x and y
        8, 8, // target x and y 
@@ -570,7 +576,9 @@ void game_end_sequence() // TODO: finish
 // keypress is 'q' or 'Q', jump to terminate_program.
 void pause()
 {
-  blit_map_playfield_offscreen();
+  comic_quit = 1;
+	      /* blit_map_playfield_offscreen();
+  wait_n_ticks(1);
   blit(128, 48, // width and height
        0, 0, // source x and y
        40, 64, // target x and y 
@@ -578,14 +586,14 @@ void pause()
        SCREEN_WIDTH, screen_buffer); // target buffer
   wait_1_tick_and_swap_video_buffers();
   SDL_Event event = {0};
-  uint8_t quit = 0;
-  while(!quit) // wait for keypress
+  while(1)//  wait for keypress
     {
       SDL_WaitEvent(&event);
       if(event.type == SDL_KEYDOWN)
 	{
 	  if(event.key.keysym.scancode == SDL_SCANCODE_Q)
 	    {
+	      SDL_Quit();
 	      exit(0);
 	    }
 	  else
@@ -593,7 +601,7 @@ void pause()
 	      return;
 	    }
 	}
-    }
+    }*/
 }
 
 void handle_enemies()
@@ -620,6 +628,8 @@ void handle_teleport()
     { // Move the camera to keep up with the motion of the teleport.
       camera_x += teleport_camera_vel;
       teleport_camera_counter--;
+      if(camera_x < 0) camera_x = 0;
+      if(camera_x > MAP_WIDTH_TILES*2 - PLAYFIELD_WIDTH) camera_x = MAP_WIDTH_TILES*2 - PLAYFIELD_WIDTH;
     }
   // render the map
   blit_map_playfield_offscreen();
@@ -745,9 +755,9 @@ void begin_teleport()
   // Now ah(destination_x) contains the column column we're trying to teleport to. Search
   // that column for a landing zone, starting from the bottom. A landing
   // zone is a solid tile with two non-solid tiles above it.
-  destination_y = PLAYFIELD_HEIGHT - 2; // start looking at the bottom row of tiles
+  destination_y = PLAYFIELD_HEIGHT - 3; // start looking at the bottom row of tiles
   destination_x = destination_x & 0xFE; // round destination x-coordinate down to an even tile boundary
-  for(; destination_y > 0; destination_y-- )
+  for(; destination_y > 0; destination_y--)
     {
       if(!is_solid(destination_x, destination_y-2) &&
 	 !is_solid(destination_x, destination_y) &&
@@ -1157,7 +1167,7 @@ void move_right()
   else
     { // try moving right 1 half-tile
       // did we try to walk into a solid tile?
-      if(is_solid(comic_x-1, comic_y+3))
+      if(is_solid(comic_x+2, comic_y+3))
 	{ // if so, stop moving and return
 	  return;
 	}
@@ -1274,7 +1284,7 @@ void handle_fall_or_jump(uint8_t jump_key_pressed, uint8_t left_key_pressed, uin
   // Are we still in the state where a jump can continue accelerating
   // upward? When comic_jump_counter is 1, the upward part of the jump is
   // over.
-  //  comic_jump_counter--;
+  comic_jump_counter--;
   if(comic_jump_counter == 0)
     { // when it hits bottom, this jump can no longer accelerate upward
       // The upward part of the jump is over (comic_jump_counter was 1 when
@@ -1292,7 +1302,7 @@ void handle_fall_or_jump(uint8_t jump_key_pressed, uint8_t left_key_pressed, uin
 	}
     }
   // integrate_vel
-  comic_y += comic_y_vel / 8;
+  comic_y += comic_y_vel / 4 - (comic_jump_counter == 2); // (comic_jump_counter == 2) is a little hack to jump 1/2 tile more upwards (detects when comic is changing from moving up to down)
   if(comic_y < 0) // did comic_y just become negative (above the top of the screen)?
     {
       comic_y = 0; //  clip to the top of the screen
@@ -1310,8 +1320,8 @@ void handle_fall_or_jump(uint8_t jump_key_pressed, uint8_t left_key_pressed, uin
     }
   comic_y_vel += COMIC_GRAVITY;
   // Clip downward velocity.
-  if(comic_y_vel > TERMINAL_VELOCITY)
-    comic_y_vel = TERMINAL_VELOCITY;
+  if(comic_y_vel > TERMINAL_VELOCITY/2)
+    comic_y_vel = TERMINAL_VELOCITY/2;
   // Adjust comic_x_momentum based on left/right inputs.
   if(left_key_pressed)
     {
@@ -1341,38 +1351,14 @@ void handle_fall_or_jump(uint8_t jump_key_pressed, uint8_t left_key_pressed, uin
   // While moving upward, we check the solidity of the tile Comic's head
   // is in. While moving downward, we instead check the solidity of the
   // tile under his feet.
-  if(is_solid(comic_x, comic_y))
-    {
-      if(comic_x % 2 == 1) // is Comic halfway between two tiles (comic_x is odd)?
-	{ // if so, also check the solidity of the tile 1 to right
-	  if(is_solid(comic_x+1, comic_y))
-	    { // bounce downward off the ceiling
-	      comic_y_vel = 8;
-	    }
-	}
-      else
-	{
-	  comic_y_vel = 8;
-	}
-    }
+  if(is_solid(comic_x, comic_y) || is_solid(comic_x + 1, comic_y))
+    comic_y_vel = 8;
   // check_solidity_downward:
   // Are we even moving downward?
   if(comic_y_vel > 0)
     {
-      if(is_solid(comic_x, comic_y + 5))
-	{
-	  if(comic_x % 2 == 1) // is Comic halfway between two tiles (comic_x is odd)?
-	    { // if so, also check the solidity of the tile 1 to right
-	      if(is_solid(comic_x+1, comic_y + 5))
-		{ // bounce downward off the ceiling
-		  goto hit_the_ground;
-		}
-	    }
-	  else
-	    {
-	      goto hit_the_ground;
-	    }
-	}
+      if(is_solid(comic_x, comic_y + 5) || is_solid(comic_x + 1, comic_y + 5))
+	goto hit_the_ground;
     }
  still_falling_or_jumping:
   comic_animation = COMIC_JUMPING;
@@ -1428,7 +1414,7 @@ void try_to_fire()
 // in subroutines.
 void game_loop()
 {
-  SDL_Event event;
+  static SDL_Event event;
   static uint8_t jump_key_pressed = 0; // keep values between recursive calls
   static uint8_t open_key_pressed = 0;
   static uint8_t teleport_key_pressed = 0;
@@ -1438,12 +1424,12 @@ void game_loop()
   static uint8_t fire_key_pressed = 0;
   while(1)
     {
-      wait_n_ticks(1);
       // poll keyboard events
       while(SDL_PollEvent(&event))
 	{
-	  
-	  if(event.type == SDL_KEYDOWN)
+	  if(event.type == SDL_QUIT)
+	    pause_key_pressed = 1;
+	  else if(event.type == SDL_KEYDOWN)
 	    {
 	      switch(event.key.keysym.scancode)
 		{
@@ -1468,6 +1454,7 @@ void game_loop()
 		case SDL_SCANCODE_RIGHT:
 		  right_key_pressed = 1;
 		  break;
+		case SDL_SCANCODE_P:
 		case SDL_SCANCODE_PAUSE:
 		case SDL_SCANCODE_ESCAPE:
 		  pause_key_pressed = 1;
@@ -1504,6 +1491,7 @@ void game_loop()
 		case SDL_SCANCODE_RIGHT:
 		  right_key_pressed = 0;
 		  break;
+		case SDL_SCANCODE_P:
 		case SDL_SCANCODE_PAUSE:
 		case SDL_SCANCODE_ESCAPE:
 		  pause_key_pressed = 0;
@@ -1516,7 +1504,6 @@ void game_loop()
 		}
 	    }
 	}
-      printf("%i\n",jump_key_pressed);
       // tick
       // If win_counter is nonzero, we are waiting out the clock to start the
       // game end sequence. The game ends when win_counter decrements to 1.
@@ -1561,10 +1548,11 @@ void game_loop()
 	    { // And is comic_jump_counter not exhausted? (I don't see how it could
 	      // be, seeing as we've checked that comic_is_falling_or_jumping == 0
 	      // already above.)
-	      if(comic_jump_counter != 0)
+	      if(comic_jump_counter != 1)
 		{ // Initiate a new jump
 		  comic_is_falling_or_jumping = 1;
 		  handle_fall_or_jump(jump_key_pressed, left_key_pressed, right_key_pressed);
+		  goto check_pause_input;
 		}
 	    }
 	  else
@@ -1610,35 +1598,31 @@ void game_loop()
 	      face_or_move_right();
 	    }
 	  // check for floor
-	  if(!is_solid(comic_x, comic_y + 4)) // comic_y + 4 is the y-coordinate just below Comic's feet
-	    { // is Comic halfway between two tiles (comic_x is odd)?
-	      if(comic_x % 2 == 1)
-		{
-		  // if so, also check the solidity of the tile 1 to the right
-		  if(!is_solid(comic_x+1, comic_y + 4))
-		    { // We're not standing on solid ground (just walked off an edge). Start
-		      // falling. The gravity when just starting to fall is 8 (i.e., 1 unit
-		      // per tick for the first tick), but later in handle_fall_or_jump
-		      // gravity will become 5 (0.625 units per tick per tick), or 3 in the
-		      // space level (0.375 units per tick per tick).
-		      comic_y_vel = 8;
-		      // After walking off an edge, Comic has 2 units of momentum (will keep
-		      // moving in that direction for 2 ticks, even if a direction button is
-		      // not pressed).
-		      if(comic_x_momentum < 0)
-			comic_x_momentum = -2;
-		      else if(comic_x_momentum > 0)
-			comic_x_momentum = +2;
-		      // now start falling, as if with a fully depleted jump
-		      comic_is_falling_or_jumping = 1;
-		      comic_jump_counter = 1;
-		    }
-		}
+	  if(!(is_solid(comic_x, comic_y + 4) || is_solid(comic_x+1, comic_y + 4))) // comic_y + 4 is the y-coordinate just below Comic's feet
+	    { // We're not standing on solid ground (just walked off an edge). Start
+	      // falling. The gravity when just starting to fall is 8 (i.e., 1 unit
+	      // per tick for the first tick), but later in handle_fall_or_jump
+	      // gravity will become 5 (0.625 units per tick per tick), or 3 in the
+	      // space level (0.375 units per tick per tick).
+	      comic_y_vel = 8;
+	      // After walking off an edge, Comic has 2 units of momentum (will keep
+	      // moving in that direction for 2 ticks, even if a direction button is
+	      // not pressed).
+	      if(comic_x_momentum < 0)
+		comic_x_momentum = -2;
+	      else if(comic_x_momentum > 0)
+		comic_x_momentum = +2;
+	      // now start falling, as if with a fully depleted jump
+	      comic_is_falling_or_jumping = 1;
+	      comic_jump_counter = 1;
 	    }
 	}
+    check_pause_input:
       // check pause input
       if(pause_key_pressed != 0)
 	pause();
+      if(comic_quit)
+	return;
       // check fire input
       if(fire_key_pressed != 0)
 	{
@@ -1677,7 +1661,9 @@ void game_loop()
       handle_enemies();
       handle_fireballs();
       handle_item();
+
       draw();
+      wait_n_ticks(1);
     }
 }
 
@@ -1937,6 +1923,5 @@ int main(int argc, char * argv[])
   if(graphics_enabled || sound_enabled) title_sequence();
   initialize_lives_sequence();
   load_new_level();
-  wait_keypress();
   return 0;
 }

@@ -6,3 +6,6 @@ clean:
 
 run: comic
 	./comic
+
+lib: comic.c
+	gcc -Wall -O0 -shared -fPIC -lSDL2 comic.c -o comic_linux.so
