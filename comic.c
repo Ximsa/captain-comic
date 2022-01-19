@@ -324,6 +324,7 @@ void initialize_lives_sequence()
       award_extra_life(0);
       draw();
     }
+  wait_keypress();
   wait_n_ticks(3);
   lose_a_life();
   PLAY_SOUND(SOUND_TITLE_RECAP);
@@ -331,17 +332,18 @@ void initialize_lives_sequence()
 }
 
 void title_sequence()
-{/*
+{
   PLAY_SOUND(SOUND_TITLE);
   blit_to_screen(0,0,SCREEN_WIDTH, SCREEN_HEIGHT, TITLE_GRAPHIC);
   draw();
+  wait_keypress();
   wait_n_ticks(10+5);
   blit_to_screen(0,0,SCREEN_WIDTH, SCREEN_HEIGHT, STORY_GRAPHIC);
   draw();
   wait_keypress();
   blit_to_screen(0,0,SCREEN_WIDTH, SCREEN_HEIGHT, ITEMS_GRAPHIC);
   draw();
-  wait_keypress();*/
+  wait_keypress();
   SDL_ClearQueuedAudio(dev);
   blit_to_screen(0,0,SCREEN_WIDTH, SCREEN_HEIGHT, UI_GRAPHIC);
   draw();
