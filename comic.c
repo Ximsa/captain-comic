@@ -1,5 +1,5 @@
 #define _CRT_SECURE_NO_WARNINGS
-
+ 
 #include <math.h>
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_audio.h>
@@ -67,18 +67,21 @@ void play_sound(uint16_t sound[][2], size_t sound_size)
 
 void wait_keypress()
 {
-  SDL_Event event = {0};
-  uint8_t quit = 0;
-  while(!quit) // wait for keypress
-    {
-      SDL_WaitEvent(&event);
-      if(event.type == SDL_KEYDOWN) break;
-    }
+  return;
+  if(graphics_enabled){
+    SDL_Event event = {0};
+    uint8_t quit = 0;
+    while(!quit) // wait for keypress
+      {
+	SDL_WaitEvent(&event);
+	if(event.type == SDL_KEYDOWN) break;
+      }
+  }
 }
 
 void wait_n_ticks(uint16_t ticks)
 {
-  SDL_Delay((2*1000*ticks/IRQ_0)); // wait for every second IRQ
+  if(graphics_enabled || sound_enabled) SDL_Delay((2*1000*ticks/IRQ_0)); // wait for every second IRQ
 }
 
 void init_sound()
@@ -192,16 +195,19 @@ void blit(uint16_t width, uint16_t height, // dimensions to blit
 	  size_t src_width, uint8_t * src_pixels, // source image
 	  size_t dest_width, uint8_t * dest_pixels) // destination image
 {
-  for(size_t x = 0; x < width; x++)
+  if(graphics_enabled){
     for(size_t y = 0; y < height; y++)
-      {
-	size_t src_index = (y+src_y)*src_width+x+src_x;
-	if (src_pixels[src_index*4 + 3])
-	  {
-	    size_t dest_index = (dest_y+y)*dest_width +dest_x+x;
-	    ((uint32_t*)dest_pixels)[dest_index] = ((uint32_t*)src_pixels)[src_index];
-	  }
-      }
+      for(size_t x = 0; x < width; x++)
+	{
+	  size_t src_index = (y+src_y)*src_width+x+src_x;
+	  if (src_pixels[src_index*4 + 3]
+	      || (dest_x >= 232 && dest_y >= 112)) // edge case when blitting collected items
+	    {
+	      size_t dest_index = (dest_y+y)*dest_width +dest_x+x;
+	      ((uint32_t*)dest_pixels)[dest_index] = ((uint32_t*)src_pixels)[src_index];
+	    }
+	}
+  }
 }
 
 // since it is impossible to Update a texture with alpha channel -> manual loop
@@ -324,7 +330,6 @@ void initialize_lives_sequence()
       award_extra_life(0);
       draw();
     }
-  wait_keypress();
   wait_n_ticks(3);
   lose_a_life();
   PLAY_SOUND(SOUND_TITLE_RECAP);
@@ -401,9 +406,13 @@ void blit_comic_playfield_offscreen()
   // Index GRAPHICS_COMIC by comic_facing and comic_animation.
   // (comic_facing is 0 or 5 and comic_animation is 0..4.)
   uint8_t index = comic_facing + comic_animation;
-  blit(16, 32, // width and height
+  uint8_t comic_y_clamped = comic_y < PLAYFIELD_HEIGHT? comic_y : PLAYFIELD_HEIGHT;
+  uint8_t comic_height_clamped = comic_y_clamped + 4 > PLAYFIELD_HEIGHT?
+    (PLAYFIELD_HEIGHT - comic_y_clamped)*8 : 32;
+  printf("%i\t%i\n", comic_y_clamped, comic_height_clamped);
+  blit(16, comic_height_clamped, // width and height
        0, 0, // source x and y
-       8+(comic_x-camera_x)*8, 8+comic_y*8, // target x and y 
+       8+(comic_x-camera_x)*8, 8+comic_y_clamped*8, // target x and y 
        16, GRAPHICS_COMIC[index], // source buffer
        SCREEN_WIDTH, screen_buffer); // target buffer
 }
@@ -414,7 +423,7 @@ void blit_comic_playfield_offscreen()
 //   offscreen_video_buffer_ptr = whichever of video buffers 0x0000 or 0x2000 is not on screen at the moment // NOTE: unused
 void blit_map_playfield_offscreen()
 {
-  printf("camera_x: %i\t comic_x: %i\ttiles_width: %i\tjump power: %i\ty-vel: %i\n", camera_x, comic_x, MAP_WIDTH_TILES,comic_jump_counter,comic_y_vel);
+  //printf("camera_x: %i\t comic_x: %i\ttiles_width: %i\tjump power: %i\ty-vel: %i\n", camera_x, comic_x, MAP_WIDTH_TILES,comic_jump_counter,comic_y_vel);
   blit(PLAYFIELD_WIDTH * 8, PLAYFIELD_HEIGHT * 8, // width and height
        camera_x * 8, 0, // source x and y
        8, 8, // target x and y 
@@ -475,9 +484,303 @@ void blank_door_offscreen(uint8_t x, uint8_t y)
        SCREEN_WIDTH, screen_buffer); // target buffer
 }
 
+// Collect a Blastola Cola. Increment comic_firepower and blit the inventory
+// graphic.
+// Output:
+//   comic_firepower = incremented by 1 if not already at MAX_NUM_FIREBALLS
+void collect_blastola_cola()
+{
+  if(comic_firepower != MAX_NUM_FIREBALLS)
+    {
+      comic_firepower++;
+    }
+}
+
+// Collect the Corkscrew.
+// Output:
+//   comic_has_corkscrew = 1
+void collect_corkscrew()
+{
+  comic_has_corkscrew = 1;
+}
+
+// Collect the Door Key.
+// Output:
+//   comic_has_door_key = 1
+void collect_door_key()
+{
+  comic_has_door_key = 1;
+}
+
+// Collect the Boots.
+// Output:
+//   comic_jump_power = 5
+void collect_boots()
+{ 
+  comic_jump_power = 5;
+}
+
+
+// Collect the Lantern.
+// Output:
+//   comic_has_lantern = 1
+void collect_lantern()
+{
+  comic_has_lantern = 1;
+}
+
+// Collect the Teleport Wand.
+// Output:
+//   comic_has_teleport_wand = 1
+void collect_teleport_wand()
+{
+  comic_has_teleport_wand = 1;
+}
+
+// Initialize win_counter to await the game_end_sequence.
+// Output:
+//   win_counter = 20
+void begin_win_countdown()
+{
+  win_counter = 20;
+}
+
+// Collect the Gems.
+// Output:
+//   comic_num_treasures = incremented by 1
+//   comic_num_lives = incremented by 1 unless already at MAX_NUM_LIVES
+//   win_counter = 20 if comic_num_treasures became 3
+void collect_gems()
+{
+  award_extra_life(1);
+  comic_num_treasures++;
+  comic_has_gems = 1;
+  if(comic_num_treasures == 3) begin_win_countdown();
+}
+
+// Collect the Crown.
+// Output:
+//   comic_num_treasures = incremented by 1
+//   comic_num_lives = incremented by 1 unless already at MAX_NUM_LIVES
+//   win_counter = 20 if comic_num_treasures became 3
+void collect_crown()
+{
+  award_extra_life(1);
+  comic_num_treasures++;
+  comic_has_crown = 1;
+  if(comic_num_treasures == 3) begin_win_countdown();
+}
+
+// Collect the Gold.
+// Output:
+//   comic_num_treasures = incremented by 1
+//   comic_num_lives = incremented by 1 unless already at MAX_NUM_LIVES
+//   win_counter = 20 if comic_num_treasures became 3
+void collect_gold()
+{
+  award_extra_life(1);
+  comic_num_treasures++;
+  comic_has_gold = 1;
+  if(comic_num_treasures == 3) begin_win_countdown();
+}
+
+// Collect an item.
+// Input:
+//   top word in stack = item type
+//   next-to-top word in stack = camera-relative coordinates of item (unused)
+// Output:
+//   sp = decremented by 4 (2 words popped off)
+//   items_collected = updated bitmap of stages' item collection status
+//   comic_num_lives = incremented by 1 if collecting a Shield with full HP
+//   comic_hp_pending_increase = set to MAX_HP if collecting a Shield
+//   comic_firepower, comic_jump_power, comic_has_corkscrew, comic_has_door_key,
+//     comic_has_lantern, comic_has_teleport_wand, comic_num_treasures = updated as appropriate
+//   score = increased by 2000 points
+void collect_item()
+{
+  PLAY_SOUND(SOUND_COLLECT_ITEM);
+  award_points(20);
+  // Mark item as collected in items_collected.
+  items_collected[current_level_number][current_stage_number] = 1;
+  uint8_t item = current_stage_ptr->item_type;
+  switch(item)
+    {	
+    case ITEM_SHIELD:// Picked up a Shield. Do we already have full HP?
+      if(comic_hp == MAX_HP) // If not, schedule MAX_HP units of HP to be awarded in the future.
+	comic_hp_pending_increase = MAX_HP;
+      break;
+    case ITEM_CORKSCREW: collect_corkscrew(); break;
+    case ITEM_DOOR_KEY: collect_door_key(); break;
+    case ITEM_BOOTS: collect_boots(); break;
+    case ITEM_LANTERN: collect_lantern(); break;
+    case ITEM_TELEPORT_WAND: collect_teleport_wand(); break;
+    case ITEM_GEMS: collect_gems(); break;
+    case ITEM_CROWN: collect_crown(); break;
+    case ITEM_GOLD: collect_gold(); break;
+    case ITEM_BLASTOLA_COLA: collect_blastola_cola(); break;
+    default: break;
+    }
+}
+
+// Collect an item if Comic is touching it// otherwise blit the item to the
+// offscreen video buffer.
+// Input:
+//   ah = camera-relative x-coordinate of item
+//   al = camera-relative y-coordinate of item
+//   bl = item type
+//   comic_x, comic_y = coordinates of Comic
+//   camera_x = x-coordinate of left edge of playfield
+//   item_animation_counter = whether to to draw an even or odd animation frame for the item
+// Output:
+//   items_collected = updated bitmap of stages' item collection status
+//   item_animation_counter = advanced by one position
+//   comic_num_lives = incremented by 1 if collecting a Shield with full HP
+//   comic_hp_pending_increase = set to MAX_HP if collecting a Shield
+//   comic_firepower, comic_jump_power, comic_has_corkscrew, comic_has_door_key,
+//     comic_has_lantern, comic_has_teleport_wand, comic_num_treasures = updated as appropriate
+//   score = increased by 2000 points if collecting an item
+void collect_item_or_blit_offscreen()
+{
+  int item_x = current_stage_ptr->item_x;
+  int item_y = current_stage_ptr->item_y;
+  // check horizontal proximity
+  if(item_x >= comic_x - 1 && item_x <= comic_x + 1
+     && item_y >= comic_y && item_y <= comic_y + 4)
+    { // We're close enough in both dimensions; pick up the item.
+      collect_item();
+    }
+  else
+    {
+      // Advance item_animation_counter (0→1, 1→0). It controls whether to
+      // draw an even or an odd animation frame.
+      uint8_t* graphic = 0;
+      switch(current_stage_ptr->item_type)
+	{
+	case ITEM_BLASTOLA_COLA:
+	  graphic = item_animation_counter ? GRAPHIC_BLASTOLA_COLA_EVEN[0] : GRAPHIC_BLASTOLA_COLA_ODD[0];
+	  break;
+	case ITEM_BOOTS:
+	  graphic = item_animation_counter ? GRAPHIC_BOOTS_EVEN : GRAPHIC_BOOTS_ODD;
+	  break;
+	case ITEM_CORKSCREW:
+	  graphic = item_animation_counter ? GRAPHIC_CORKSCREW_EVEN : GRAPHIC_CORKSCREW_ODD;
+	  break;
+	case ITEM_CROWN:
+	  graphic = item_animation_counter ? GRAPHIC_CROWN_EVEN : GRAPHIC_CROWN_ODD;
+	  break;
+	case ITEM_DOOR_KEY:
+	  graphic = item_animation_counter ? GRAPHIC_DOOR_KEY_EVEN : GRAPHIC_DOOR_KEY_ODD;
+	  break;
+	case ITEM_GEMS:
+	  graphic = item_animation_counter ? GRAPHIC_GEMS_EVEN : GRAPHIC_GEMS_ODD;
+	  break;
+	case ITEM_GOLD:
+	  graphic = item_animation_counter ? GRAPHIC_GOLD_EVEN : GRAPHIC_GOLD_ODD;
+	  break;
+	case ITEM_LANTERN:
+	  graphic = item_animation_counter ? GRAPHIC_LANTERN_EVEN : GRAPHIC_LANTERN_ODD;
+	  break;
+	case ITEM_SHIELD:
+	  graphic = item_animation_counter ? GRAPHIC_BLASTOLA_COLA_EVEN[6] : GRAPHIC_BLASTOLA_COLA_ODD[6];
+	  break;
+	case ITEM_TELEPORT_WAND:
+	  graphic = item_animation_counter ? GRAPHIC_TELEPORT_WAND_EVEN : GRAPHIC_TELEPORT_WAND_ODD;
+	  break;
+	case ITEM_UNUSED:
+	  break;
+	default:
+	  graphic = GRAPHICS_COMIC[0];
+	  break;
+	}
+      blit(16, 16, // width and height
+	   0, 0, // source x and y
+	   8+(item_x-camera_x)*8, 8+item_y*8, // target x and y 
+	   16, graphic, // source buffer
+	   SCREEN_WIDTH, screen_buffer); // target buffer
+    }
+}
+
+void blit_item_ui()
+{
+  item_animation_counter = (item_animation_counter + 1) % 2;
+  /*uint8_t blank[3*16*3*16*4] = {0};
+  blit(3*16, 3*16, // width and height
+       0, 0, // source x and y
+       232, 112, // target x and y 
+       3*16, blank, // source buffer
+       SCREEN_WIDTH, screen_buffer); // target buffer*/
+  if(comic_has_corkscrew)
+    blit(16, 16, // width and height
+	 0, 0, // source x and y
+	 256, 112, // target x and y 
+	 16, item_animation_counter ? GRAPHIC_CORKSCREW_EVEN : GRAPHIC_CORKSCREW_ODD, // source buffer
+	 SCREEN_WIDTH, screen_buffer); // target buffer
+  if(comic_has_door_key)
+    blit(16, 16, // width and height
+	 0, 0, // source x and y
+	 280, 112, // target x and y 
+	 16, item_animation_counter ? GRAPHIC_DOOR_KEY_EVEN : GRAPHIC_DOOR_KEY_ODD, // source buffer
+	 SCREEN_WIDTH, screen_buffer); // target buffer
+  if(comic_jump_power == 5)
+    blit(16, 16, // width and height
+	 0, 0, // source x and y
+	 232, 136, // target x and y 
+	 16, item_animation_counter ? GRAPHIC_BOOTS_EVEN : GRAPHIC_BOOTS_ODD, // source buffer
+	 SCREEN_WIDTH, screen_buffer); // target buffer
+  if(comic_has_lantern)
+    blit(16, 16, // width and height
+	 0, 0, // source x and y
+	 256, 136, // target x and y 
+	 16, item_animation_counter ? GRAPHIC_LANTERN_EVEN : GRAPHIC_LANTERN_ODD, // source buffer
+	 SCREEN_WIDTH, screen_buffer); // target buffer
+  if(comic_has_teleport_wand)
+    blit(16, 16, // width and height
+	 0, 0, // source x and y
+	 280, 136, // target x and y 
+	 16, item_animation_counter ? GRAPHIC_TELEPORT_WAND_EVEN : GRAPHIC_TELEPORT_WAND_ODD, // source buffer
+	 SCREEN_WIDTH, screen_buffer); // target buffer
+  if(comic_has_gems)
+    blit(16, 16, // width and height
+	 0, 0, // source x and y
+	 232, 160, // target x and y 
+	 16, item_animation_counter ? GRAPHIC_GEMS_EVEN : GRAPHIC_GEMS_ODD, // source buffer
+	 SCREEN_WIDTH, screen_buffer); // target buffer
+  if(comic_has_crown)
+    blit(16, 16, // width and height
+	 0, 0, // source x and y
+	 256, 160, // target x and y 
+	 16, item_animation_counter ? GRAPHIC_CROWN_EVEN : GRAPHIC_CROWN_ODD, // source buffer
+	 SCREEN_WIDTH, screen_buffer); // target buffer
+  if(comic_has_gold)
+    blit(16, 16, // width and height
+	 0, 0, // source x and y
+	 280, 160, // target x and y 
+	 16, item_animation_counter ? GRAPHIC_GOLD_EVEN : GRAPHIC_GOLD_ODD, // source buffer
+	 SCREEN_WIDTH, screen_buffer); // target buffer
+  if(comic_firepower > 0)
+    blit(16, 16, // width and height
+	 0, 0, // source x and y
+	 232, 112, // target x and y 
+	 16, item_animation_counter ? GRAPHIC_BLASTOLA_COLA_EVEN[comic_firepower] : GRAPHIC_BLASTOLA_COLA_ODD[comic_firepower], // source buffer
+	 SCREEN_WIDTH, screen_buffer); // target buffer
+}
+
 void handle_item()
 { // TODO: finish
-  
+  // is there an item in this stage?
+  if (current_stage_ptr->item_type != ITEM_UNUSED)
+    {
+      if(!items_collected[current_level_number][current_stage_number])
+	{
+	  // check if item is off screen
+	  int16_t camera_rel_x = current_stage_ptr->item_x - camera_x;
+	  if(!(camera_rel_x < 0 || camera_rel_x > 22))
+	    {
+	      collect_item_or_blit_offscreen();
+	    }
+	}
+    }
+  blit_item_ui();
 }
 
 // Play the beam-in animation.
@@ -1258,9 +1561,48 @@ void activate_door(door source_door)
       load_new_level();
     }
 }
-
+// Handle a Comic death by falling. Blit what of Comic remains in the playfield
+// and play SOUND_TOO_BAD. If this was the last life, jump to game_over. If
+// there are lives remaining, subtract one, reinitialize state variables, and
+// jump to load_new_stage.comic_located to respawn.
+// Input:
+//   si = coordinates of Comic
+//   comic_num_lives = if 0, game over// otherwise respawn
+// Output:
+//   comic_x, comic_y = copied from si in input
+//   comic_run_cycle = 0
+//   comic_is_falling_or_jumping = 0
+//   comic_x_momentum = 0
+//   comic_y_vel = 0
+//   comic_jump_counter = 0
+//   comic_animation = COMIC_STANDING
+//   comic_hp = 0
+//   comic_hp_pending_increase = MAX_HP
+//   fireball_meter_counter = 2
 void comic_dies()
 { // TODO: finish
+  blit_map_playfield_offscreen();
+  blit_comic_playfield_offscreen();
+  wait_n_ticks(2);
+  PLAY_SOUND(SOUND_TOO_BAD);
+  wait_n_ticks(15);
+  if(comic_num_lives == 0)
+    {
+      // game over
+    }
+  else
+    {
+      lose_a_life();
+      comic_run_cycle = 0;
+      comic_is_falling_or_jumping = 0;
+      comic_x_momentum = 0;
+      comic_y_vel = 0;
+      comic_jump_counter = 0;
+      comic_animation = COMIC_STANDING;
+      comic_hp_pending_increase = MAX_HP;
+      fireball_meter_counter = 2;
+      load_new_stage();
+    }
 }
 
 // Handle Comic movement when comic_is_falling_or_jumping == 1. Apply upward
@@ -1311,7 +1653,7 @@ void handle_fall_or_jump(uint8_t jump_key_pressed, uint8_t left_key_pressed, uin
     }
   // Is the top of Comic's head within 3 units of the bottom of the screen
   // (i.e., his feet are below the bottom of the screen)?
-  if(comic_y < PLAYFIELD_HEIGHT - 3)
+  if(comic_y >= PLAYFIELD_HEIGHT + 3)
     { // if so, it's a death by falling
       comic_dies();
     }
@@ -1663,7 +2005,6 @@ void game_loop()
       handle_enemies();
       handle_fireballs();
       handle_item();
-
       draw();
       wait_n_ticks(1);
     }
@@ -1692,7 +2033,8 @@ void game_loop()
 //   enemies = initialized
 void load_new_stage()
  {
-   stage current_stage = (LEVEL_DATA_POINTERS[current_level_number])->stages[current_stage_number];
+   current_stage_ptr = &(LEVEL_DATA_POINTERS[current_level_number])->stages[current_stage_number];
+   stage current_stage = *current_stage_ptr;
    render_map();
    // Are we entering this stage via a door? If so, we need to find the
    // door in this stage that links back to the stage we came from. Comic

@@ -1,0 +1,245 @@
+desc: (none)
+cmd: ./comic
+time_unit: i
+#-----------
+snapshot=0
+#-----------
+time=0
+mem_heap_B=0
+mem_heap_extra_B=0
+mem_stacks_B=0
+heap_tree=empty
+#-----------
+snapshot=1
+#-----------
+time=379195
+mem_heap_B=472
+mem_heap_extra_B=16
+mem_stacks_B=0
+heap_tree=empty
+#-----------
+snapshot=2
+#-----------
+time=380590
+mem_heap_B=4568
+mem_heap_extra_B=24
+mem_stacks_B=0
+heap_tree=empty
+#-----------
+snapshot=3
+#-----------
+time=384995
+mem_heap_B=4568
+mem_heap_extra_B=24
+mem_stacks_B=0
+heap_tree=peak
+n2: 4568 (heap allocation functions) malloc/new/new[], --alloc-fns, etc.
+ n1: 4096 0x4A84A93: _IO_file_doallocate (in /usr/lib64/libc.so.6)
+  n1: 4096 0x4A936AF: _IO_doallocbuf (in /usr/lib64/libc.so.6)
+   n1: 4096 0x4A90E14: _IO_file_seekoff@@GLIBC_2.2.5 (in /usr/lib64/libc.so.6)
+    n1: 4096 0x4A8D922: fseek (in /usr/lib64/libc.so.6)
+     n1: 4096 0x40710B: load_new_level (in /mnt/c/Users/Felix/Documents/git/captain-comic/comic)
+      n0: 4096 0x4011E0: main (in /mnt/c/Users/Felix/Documents/git/captain-comic/comic)
+ n1: 472 0x4A8542E: __fopen_internal (in /usr/lib64/libc.so.6)
+  n1: 472 0x4070F9: load_new_level (in /mnt/c/Users/Felix/Documents/git/captain-comic/comic)
+   n0: 472 0x4011E0: main (in /mnt/c/Users/Felix/Documents/git/captain-comic/comic)
+#-----------
+snapshot=4
+#-----------
+time=384995
+mem_heap_B=472
+mem_heap_extra_B=16
+mem_stacks_B=0
+heap_tree=empty
+#-----------
+snapshot=5
+#-----------
+time=385134
+mem_heap_B=0
+mem_heap_extra_B=0
+mem_stacks_B=0
+heap_tree=empty
+#-----------
+snapshot=6
+#-----------
+time=1566395
+mem_heap_B=472
+mem_heap_extra_B=16
+mem_stacks_B=0
+heap_tree=empty
+#-----------
+snapshot=7
+#-----------
+time=1567072
+mem_heap_B=4568
+mem_heap_extra_B=24
+mem_stacks_B=0
+heap_tree=empty
+#-----------
+snapshot=8
+#-----------
+time=1568224
+mem_heap_B=472
+mem_heap_extra_B=16
+mem_stacks_B=0
+heap_tree=empty
+#-----------
+snapshot=9
+#-----------
+time=1568363
+mem_heap_B=0
+mem_heap_extra_B=0
+mem_stacks_B=0
+heap_tree=empty
+#-----------
+snapshot=10
+#-----------
+time=1568421
+mem_heap_B=472
+mem_heap_extra_B=16
+mem_stacks_B=0
+heap_tree=empty
+#-----------
+snapshot=11
+#-----------
+time=1569098
+mem_heap_B=4568
+mem_heap_extra_B=24
+mem_stacks_B=0
+heap_tree=empty
+#-----------
+snapshot=12
+#-----------
+time=1570250
+mem_heap_B=472
+mem_heap_extra_B=16
+mem_stacks_B=0
+heap_tree=empty
+#-----------
+snapshot=13
+#-----------
+time=1570389
+mem_heap_B=0
+mem_heap_extra_B=0
+mem_stacks_B=0
+heap_tree=detailed
+n1: 0 (heap allocation functions) malloc/new/new[], --alloc-fns, etc.
+ n0: 0 in 2 places, all below massif's threshold (1.00%)
+#-----------
+snapshot=14
+#-----------
+time=1570447
+mem_heap_B=472
+mem_heap_extra_B=16
+mem_stacks_B=0
+heap_tree=empty
+#-----------
+snapshot=15
+#-----------
+time=1571124
+mem_heap_B=4568
+mem_heap_extra_B=24
+mem_stacks_B=0
+heap_tree=empty
+#-----------
+snapshot=16
+#-----------
+time=1572277
+mem_heap_B=472
+mem_heap_extra_B=16
+mem_stacks_B=0
+heap_tree=empty
+#-----------
+snapshot=17
+#-----------
+time=1572416
+mem_heap_B=0
+mem_heap_extra_B=0
+mem_stacks_B=0
+heap_tree=empty
+#-----------
+snapshot=18
+#-----------
+time=1572503
+mem_heap_B=472
+mem_heap_extra_B=16
+mem_stacks_B=0
+heap_tree=empty
+#-----------
+snapshot=19
+#-----------
+time=1573155
+mem_heap_B=4568
+mem_heap_extra_B=24
+mem_stacks_B=0
+heap_tree=empty
+#-----------
+snapshot=20
+#-----------
+time=1573822
+mem_heap_B=472
+mem_heap_extra_B=16
+mem_stacks_B=0
+heap_tree=empty
+#-----------
+snapshot=21
+#-----------
+time=1573961
+mem_heap_B=0
+mem_heap_extra_B=0
+mem_stacks_B=0
+heap_tree=empty
+#-----------
+snapshot=22
+#-----------
+time=1607193
+mem_heap_B=472
+mem_heap_extra_B=16
+mem_stacks_B=0
+heap_tree=empty
+#-----------
+snapshot=23
+#-----------
+time=1607845
+mem_heap_B=4568
+mem_heap_extra_B=24
+mem_stacks_B=0
+heap_tree=detailed
+n2: 4568 (heap allocation functions) malloc/new/new[], --alloc-fns, etc.
+ n1: 4096 0x4A84A93: _IO_file_doallocate (in /usr/lib64/libc.so.6)
+  n2: 4096 0x4A936AF: _IO_doallocbuf (in /usr/lib64/libc.so.6)
+   n1: 4096 0x4A916D3: _IO_file_xsgetn (in /usr/lib64/libc.so.6)
+    n1: 4096 0x4A85A38: fread (in /usr/lib64/libc.so.6)
+     n1: 4096 0x406CEF: load_shp_file (in /mnt/c/Users/Felix/Documents/git/captain-comic/comic)
+      n1: 4096 0x4073D9: load_new_level (in /mnt/c/Users/Felix/Documents/git/captain-comic/comic)
+       n0: 4096 0x4011E0: main (in /mnt/c/Users/Felix/Documents/git/captain-comic/comic)
+   n0: 0 in 1 place, below massif's threshold (1.00%)
+ n2: 472 0x4A8542E: __fopen_internal (in /usr/lib64/libc.so.6)
+  n1: 472 0x406CD7: load_shp_file (in /mnt/c/Users/Felix/Documents/git/captain-comic/comic)
+   n1: 472 0x4073D9: load_new_level (in /mnt/c/Users/Felix/Documents/git/captain-comic/comic)
+    n0: 472 0x4011E0: main (in /mnt/c/Users/Felix/Documents/git/captain-comic/comic)
+  n0: 0 in 4 places, all below massif's threshold (1.00%)
+#-----------
+snapshot=24
+#-----------
+time=1608512
+mem_heap_B=472
+mem_heap_extra_B=16
+mem_stacks_B=0
+heap_tree=empty
+#-----------
+snapshot=25
+#-----------
+time=1608651
+mem_heap_B=0
+mem_heap_extra_B=0
+mem_stacks_B=0
+heap_tree=empty
+#-----------
+snapshot=26
+#-----------
+time=1643836
+mem_heap_B=1024
+mem_heap_extra_B=8
+mem_stacks_B=0
+heap_tree=empty

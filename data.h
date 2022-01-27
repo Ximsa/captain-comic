@@ -42,12 +42,15 @@ uint8_t comic_num_lives		=	0;
 uint8_t comic_hp		=	0;
 uint8_t comic_firepower		=	0;// how many Blastola Colas Comic has collected
 uint8_t fireball_meter		=	0;
-uint8_t comic_jump_power	=	4;//4;
-uint8_t comic_has_corkscrew	=	1; // TODO: reset to 0
-uint8_t comic_has_door_key	=	1;
-uint8_t comic_has_lantern	=	1;
-uint8_t comic_has_teleport_wand	=	1;
-uint8_t comic_num_treasures	=	1;
+uint8_t comic_jump_power	=	4;
+uint8_t comic_has_corkscrew	=	0;
+uint8_t comic_has_door_key	=	0;
+uint8_t comic_has_lantern	=	0;
+uint8_t comic_has_teleport_wand	=	0;
+uint8_t comic_has_gems		=	0;
+uint8_t comic_has_gold		=	0;
+uint8_t comic_has_crown		=	0;
+uint8_t comic_num_treasures	=	0;
 
 // The score is an array of 3 bytes, stored in base-100 representation. score[0]
 // is the least significant digit. The number stored here one one-hundredth of
@@ -58,132 +61,11 @@ uint8_t score_10000_counter	=	0;
 // Array of booleans indicating whether the item in each stage has been
 // collected. Index as: items_collected[stage*16 + level]. Only the first 8
 // elements in each row are used.)
-uint8_t items_collected[16*3]	=	{0};
+uint8_t items_collected[8][3]	=	{0};
 
 #define STARTUP_NOTICE_TEXT "The Adventures of Captain Comic"/*\r\nCopyright (c) 1988 by Michael Denio\r\n"*/
 
 #define TERMINATE_PROGRAM_TEXT ""
-
-// puffer storing the entire rendered map
-uint8_t rendered_map_buffer[16*16*4*MAP_WIDTH_TILES*MAP_HEIGHT_TILES];
-
-#define TILESET_MAX_LENGTH (128*16*16)
-uint8_t tileset_buffer_raw[4+TILESET_MAX_LENGTH/2];
-struct
-{
-  uint8_t last_passable;
-  uint8_t flags;
-  uint8_t graphics[TILESET_MAX_LENGTH*4]; // space for up to 128 16×16 tile graphics
-} tileset_buffer;
-
-uint8_t pt0_raw[2*16+MAP_WIDTH_TILES * MAP_HEIGHT_TILES];
-uint8_t pt1_raw[2*16+MAP_WIDTH_TILES * MAP_HEIGHT_TILES];
-uint8_t pt2_raw[2*16+MAP_WIDTH_TILES * MAP_HEIGHT_TILES];
-typedef struct
-{
-  uint16_t width;
-  uint16_t height;
-  uint8_t * tiles;
-} pt;
-pt pt0, pt1, pt2;
-
-typedef struct
-{
-  uint8_t y;
-  uint8_t x;
-  uint8_t x_vel;
-  uint8_t y_vel;
-  uint8_t spawn_timer_and_animation;	// when the enemy is not spawned, the counter until it spawns; when spawned, the animation counter
-  uint8_t num_animation_frames;
-  uint8_t behavior;
-  uint16_t animation_frames_ptr;
-  uint8_t state; // 0 = despawned, 1 = spawned, 2..6 = white spark animation counter, 8..12 = red spark animation counter
-  uint8_t facing;
-  uint8_t restraint; // governs whether the enemy moves every tick or every other tick
-} enemy;
-
-enemy enemies[MAX_NUM_ENEMIES];
-
-// The number of frames in each of the 4 enemies' animation cycles. The values
-// are always 4 for the .SHP files that come with Captain Comic. (Either 4
-// distinct frames for ENEMY_HORIZONTAL_SEPARATE, or 3 distinct + 1 duplicate
-// for ENEMY_HORIZONTAL_DUPLICATED.) This number of frames only counts one
-// facing direction (the number of frames facing left and facing right is the
-// same).
-
-uint8_t enemy_num_animation_frames[4];
-
-// Buffers for raw graphics data from .SHP files. There is room for up to 5
-// left-facing graphics and 5 right-facing graphics.
-uint8_t enemy_raw[10*160];
-uint8_t enemy_graphics[4][10*16*16*4];
-
-
-// Pointers to graphics data for each enemy's animation cycle. These arrays
-// contain pointers into enemy*_graphics.
-uint8_t* enemy_animation_frames[4][10];
-
-// http://www.shikadi.net/moddingwiki/Captain_Comic_Map_Format#Executable_file
-typedef struct
-{
-  uint8_t num_distinct_frames; // the number of animation frames stored in the file (not counting automatically duplicated ones or right-facing ones)
-  uint8_t horizontal; // ENEMY_HORIZONTAL_DUPLICATED or ENEMY_HORIZONTAL_SEPARATE
-  uint8_t animation; // ENEMY_ANIMATION_LOOP or ENEMY_ANIMATION_ALTERNATE
-  char filename[14];
-} shp;
-
-typedef struct
-{
-  uint8_t y, x, target_level, target_stage;
-} door;
-
-typedef struct
-{
-  uint8_t shp_index; // index into the level.shp array, indicating what graphics to use for this enemy, 0xff means this slot is unused
-  uint8_t behavior; // ENEMY_BEHAVIOR_* or ENEMY_BEHAVIOR_UNUSED
-} enemy_record;
-
-typedef struct
-{
-  uint8_t item_type, item_y, item_x, exit_l, exit_r;
-  door doors[3];
-  enemy_record enemies[4];
-} stage;
-stage * current_stage_ptr = 0;
-
-typedef struct
-{
-  char tt2_filename[14];
-  char pt0_filename[14];
-  char pt1_filename[14];
-  char pt2_filename[14];
-  uint8_t door_tile_ul, door_tile_ur, door_tile_ll, door_tile_lr;
-  shp shps[4];
-  stage stages[3];
-} level;
-
-#include "levels.h" // contains level information
-
-// This data structure represents the currently loaded level. It is populated by
-// copying from the static data structures referenced from LEVEL_DATA_POINTERS.
-
-level current_level = {0};
-level* LEVEL_DATA_POINTERS[] =
-  {
-    &LEVEL_DATA_LAKE,
-    &LEVEL_DATA_FOREST,
-    &LEVEL_DATA_SPACE,
-    &LEVEL_DATA_BASE,
-    &LEVEL_DATA_CAVE,
-    &LEVEL_DATA_SHED,
-    &LEVEL_DATA_CASTLE,
-    &LEVEL_DATA_COMP,
-  };
-
-// Where to place Comic when entering a new stage or respawning after death. The
-// initial value of (14, 12) is used at the start of the game.
-uint8_t comic_y_checkpoint	=	12;
-uint8_t comic_x_checkpoint	=	14;
 
 
 uint8_t graphics_enabled = 1;
@@ -352,6 +234,128 @@ uint8_t UI_GRAPHIC[320*200*4] = "SYS003.EGA";
 uint8_t STORY_GRAPHIC[320*200*4] = "SYS001.EGA";
 uint8_t ITEMS_GRAPHIC[320*200*4] = "SYS004.EGA";
 uint8_t WIN_GRAPHIC[320*200*4] = "SYS002.EGA";
+
+// puffer storing the entire rendered map
+uint8_t rendered_map_buffer[16*16*4*MAP_WIDTH_TILES*MAP_HEIGHT_TILES];
+
+#define TILESET_MAX_LENGTH (128*16*16)
+uint8_t tileset_buffer_raw[4+TILESET_MAX_LENGTH/2];
+struct
+{
+  uint8_t last_passable;
+  uint8_t flags;
+  uint8_t graphics[TILESET_MAX_LENGTH*4]; // space for up to 128 16×16 tile graphics
+} tileset_buffer;
+
+uint8_t pt0_raw[2*16+MAP_WIDTH_TILES * MAP_HEIGHT_TILES];
+uint8_t pt1_raw[2*16+MAP_WIDTH_TILES * MAP_HEIGHT_TILES];
+uint8_t pt2_raw[2*16+MAP_WIDTH_TILES * MAP_HEIGHT_TILES];
+typedef struct
+{
+  uint16_t width;
+  uint16_t height;
+  uint8_t * tiles;
+} pt;
+pt pt0, pt1, pt2;
+
+typedef struct
+{
+  uint8_t y;
+  uint8_t x;
+  uint8_t x_vel;
+  uint8_t y_vel;
+  uint8_t spawn_timer_and_animation;	// when the enemy is not spawned, the counter until it spawns; when spawned, the animation counter
+  uint8_t num_animation_frames;
+  uint8_t behavior;
+  uint16_t animation_frames_ptr;
+  uint8_t state; // 0 = despawned, 1 = spawned, 2..6 = white spark animation counter, 8..12 = red spark animation counter
+  uint8_t facing;
+  uint8_t restraint; // governs whether the enemy moves every tick or every other tick
+} enemy;
+
+enemy enemies[MAX_NUM_ENEMIES];
+
+// The number of frames in each of the 4 enemies' animation cycles. The values
+// are always 4 for the .SHP files that come with Captain Comic. (Either 4
+// distinct frames for ENEMY_HORIZONTAL_SEPARATE, or 3 distinct + 1 duplicate
+// for ENEMY_HORIZONTAL_DUPLICATED.) This number of frames only counts one
+// facing direction (the number of frames facing left and facing right is the
+// same).
+
+uint8_t enemy_num_animation_frames[4];
+
+// Buffers for raw graphics data from .SHP files. There is room for up to 5
+// left-facing graphics and 5 right-facing graphics.
+uint8_t enemy_raw[10*160];
+uint8_t enemy_graphics[4][10*16*16*4];
+
+
+// Pointers to graphics data for each enemy's animation cycle. These arrays
+// contain pointers into enemy*_graphics.
+uint8_t* enemy_animation_frames[4][10];
+
+
+// http://www.shikadi.net/moddingwiki/Captain_Comic_Map_Format#Executable_file
+typedef struct
+{
+  uint8_t num_distinct_frames; // the number of animation frames stored in the file (not counting automatically duplicated ones or right-facing ones)
+  uint8_t horizontal; // ENEMY_HORIZONTAL_DUPLICATED or ENEMY_HORIZONTAL_SEPARATE
+  uint8_t animation; // ENEMY_ANIMATION_LOOP or ENEMY_ANIMATION_ALTERNATE
+  char filename[14];
+} shp;
+
+typedef struct
+{
+  uint8_t y, x, target_level, target_stage;
+} door;
+
+typedef struct
+{
+  uint8_t shp_index; // index into the level.shp array, indicating what graphics to use for this enemy, 0xff means this slot is unused
+  uint8_t behavior; // ENEMY_BEHAVIOR_* or ENEMY_BEHAVIOR_UNUSED
+} enemy_record;
+
+typedef struct
+{
+  uint8_t item_type, item_y, item_x, exit_l, exit_r;
+  door doors[3];
+  enemy_record enemies[4];
+} stage;
+stage * current_stage_ptr = 0;
+
+typedef struct
+{
+  char tt2_filename[14];
+  char pt0_filename[14];
+  char pt1_filename[14];
+  char pt2_filename[14];
+  uint8_t door_tile_ul, door_tile_ur, door_tile_ll, door_tile_lr;
+  shp shps[4];
+  stage stages[3];
+} level;
+
+#include "levels.h" // contains level information
+
+// This data structure represents the currently loaded level. It is populated by
+// copying from the static data structures referenced from LEVEL_DATA_POINTERS.
+
+level current_level = {0};
+level* LEVEL_DATA_POINTERS[] =
+  {
+    &LEVEL_DATA_LAKE,
+    &LEVEL_DATA_FOREST,
+    &LEVEL_DATA_SPACE,
+    &LEVEL_DATA_BASE,
+    &LEVEL_DATA_CAVE,
+    &LEVEL_DATA_SHED,
+    &LEVEL_DATA_CASTLE,
+    &LEVEL_DATA_COMP,
+  };
+
+// Where to place Comic when entering a new stage or respawning after death. The
+// initial value of (14, 12) is used at the start of the game.
+uint8_t comic_y_checkpoint	=	12;
+uint8_t comic_x_checkpoint	=	14;
 
 uint16_t door_blit_offset = 0;
 
@@ -714,6 +718,6 @@ typedef struct
 } fireball;
 fireball fireballs[MAX_NUM_FIREBALLS] = {{.y = FIREBALL_DEAD, .x = FIREBALL_DEAD, .num_animation_frames = 2}};
 
-
+uint8_t item_animation_counter = 0;
 
 #endif
