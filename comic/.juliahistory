@@ -1,0 +1,46 @@
+"asd " + "asd"
+"asd " .. "asd"
+"asd " * "asd"
+"asd" * 4
+str(5)
+inc
+f = 1
+f++
+f += 1
+comic_instances
+comic_instances
+comic_instances[1] = 5
+comic_instances
+cp
+comic_instances
+comic_instances = Dict()
+comic_instances
+comic_add_instance(1,1,1)
+comic_add_instance(1,1,1)
+comic_add_instance(1,1,1)
+comic_add_instance(1,1,1,1)
+comic_add_instance(1,1,1,1)
+comic_add_instance(1,1,1,1)
+comic_add_instance(1,1,1,1)
+comic_add_instance(1,1,1,1)
+comic_instances
+rm
+comic_add_instance(1,1,1,1)
+foo = comic_add_instance(2,1,1,1)
+foo
+ ccall((:setup, foo), Cvoid,
+          (UInt8,UInt8,UInt8),
+          graphic,sound,skip_intro)
+foo  = dlopen("comic-linux.so")
+foo  = dlopen("comic-linux.so")
+using Base.Libc.Libdl
+foo  = dlopen("comic-linux.so")
+foo  = dlopen("comic_linux.so")
+foo  = dlopen("./comic_linux.so")
+ccall((:setup, foo))
+ccall((:setup, foo), (UInt8,UInt8,UInt8),1,1,1)
+ccall((:setup, foo), Cvoid, (UInt8,UInt8,UInt8),1,1,1)
+foo
+ccall((:setup, "comic_linux.so"), Cvoid, (UInt8,UInt8,UInt8),1,1,1)
+ccall((:setup, "./comic_linux.so"), Cvoid, (UInt8,UInt8,UInt8),1,1,1)
+ccall((:setup, "./comic_linux.so"), Cvoid, (UInt8,UInt8,UInt8),1,1,1)
