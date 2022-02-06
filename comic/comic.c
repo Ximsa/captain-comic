@@ -1,13 +1,14 @@
 #define _CRT_SECURE_NO_WARNINGS
- 
+
 #include <math.h>
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_audio.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <time.h>
-#include "data.h"
-#include "constants.h"
+#include "export.h"
+#include "data.h" 
+#include "constants.h" 
 
 SDL_AudioDeviceID dev = {0};
 SDL_Window * win = NULL;
@@ -391,7 +392,7 @@ uint8_t is_solid(uint8_t x, uint8_t y)
 
 // returns the currently visible area (24*20 tiles) and global state
 // environment_array should be of size MAP_HEIGHT * PLAYFIELD_WIDTH
-extern void get_environment(uint8_t * environment_array, uint8_t * flags) 
+EXPORTED void get_environment(uint8_t * environment_array, uint8_t * flags) 
 {
   // get the current tile information
   pt current_pt;
@@ -1788,9 +1789,10 @@ void try_to_fire()
   
 }
 
-extern void tick(uint8_t jump_key_pressed, uint8_t open_key_pressed, uint8_t teleport_key_pressed,
+EXPORTED void tick(uint8_t jump_key_pressed, uint8_t open_key_pressed, uint8_t teleport_key_pressed,
 		 uint8_t left_key_pressed, uint8_t right_key_pressed, uint8_t pause_key_pressed,
-		 uint8_t fire_key_pressed){
+		 uint8_t fire_key_pressed)
+{
   // tick
   // If win_counter is nonzero, we are waiting out the clock to start the
   // game end sequence. The game ends when win_counter decrements to 1.
@@ -2312,7 +2314,7 @@ void load_new_level()
    load_shp_files();
  }
 
-extern void setup(uint8_t graphics, uint8_t sound, uint8_t skip)
+EXPORTED void setup(uint8_t graphics, uint8_t sound, uint8_t skip)
 {
   skip_intro = skip;
   graphics_enabled = graphics;
@@ -2333,7 +2335,7 @@ int main(int argc, char * argv[])
 
 
 // undos every action
-extern void reset()
+EXPORTED void reset()
 {
   source_door_level_number	=	-2;
   source_door_stage_number	=	0;
