@@ -423,6 +423,7 @@
     <None Include="graphics\white_spark_2_16x16m.ega">
       <Filter>Ressourcendateien\graphics</Filter>
     </None>
+    <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="comic.c">
