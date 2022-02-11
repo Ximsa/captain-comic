@@ -2334,7 +2334,7 @@ EXPORTED void setup(uint8_t graphics, uint8_t sound, uint8_t skip)
 int main(int argc, char * argv[])
 {
   // parse args
-  setup(graphics_enabled, sound_enabled, 0);
+	setup(1, 1, 0);//graphics_enabled, sound_enabled, 0);
   game_loop();
 }
 

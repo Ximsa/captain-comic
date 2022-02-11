@@ -1,0 +1,39 @@
+Comic
+Comic.add_instance(1,1,1,0)
+Comic.add_instance(1,1,1,0)
+pwd
+pwd()
+pwd() + "123"
+string(pwd(), "/comic")
+Comic.add_instance(1,1,1,0)
+pwd()
+cd ("..")
+cd("..")
+pwd()
+Comic.add_instance(1,1,1,1)
+Comic.add_instance(1,1,1,0)
+Comic.add_instance(1,1,1,1)
+Comic.add_instance(2,1,1,1)
+Comic.add_instance(4,1,1,1)
+Comic.reset(4)
+Comic.add_instance(2)
+Comic.tick(2,1,0,0,0,0)
+Comic.tick(2,1,0,0,0,0)
+Comic.tick(2,1,0,0,0,0)
+Comic.reset(2)
+Comic.add_instance(1)
+Comic.add_instance(1)
+first_run
+Comic.first_run
+Comic.add_instance(1)
+Comic.add_instance(1,0,0,0)
+Comic.add_instance(2)
+Comic.instances
+Comic.instances[123]
+haskey(Comic.instances, 123)
+! false
+Comic.add_instance(1)
+Comic.add_instance(1)
+Comic.add_instance(1)
+Comic.add_instance(1)
+Comic.add_instance(2)
