@@ -1,15 +1,15 @@
 ﻿  Vcpkg is unable to link because we cannot decide between Release and Debug libraries. Please define the property VcpkgConfiguration to be 'Release' or 'Debug' (currently 'Library').
   comic.c
-C:\Users\Felix\Documents\git\captain-comic\comic\comic.c(65,59): warning C4267: "Funktion": Konvertierung von "size_t" nach "Uint32", Datenverlust möglich
-C:\Users\Felix\Documents\git\captain-comic\comic\comic.c(84,71): warning C4244: "Funktion": Konvertierung von "double" in "Uint32", möglicher Datenverlust
-C:\Users\Felix\Documents\git\captain-comic\comic\comic.c(1041,1): warning C4244: "Initialisierung": Konvertierung von "int16_t" in "uint8_t", möglicher Datenverlust
-C:\Users\Felix\Documents\git\captain-comic\comic\comic.c(1270,17): warning C4267: "Funktion": Konvertierung von "size_t" nach "uint16_t", Datenverlust möglich
-C:\Users\Felix\Documents\git\captain-comic\comic\comic.c(1270,29): warning C4267: "Funktion": Konvertierung von "size_t" nach "uint16_t", Datenverlust möglich
-C:\Users\Felix\Documents\git\captain-comic\comic\comic.c(2255,28): warning C4267: "Funktion": Konvertierung von "size_t" nach "uint8_t", Datenverlust möglich
+C:\Users\Felix\Documents\git\captain-comic\comic\comic.c(70,59): warning C4267: "Funktion": Konvertierung von "size_t" nach "Uint32", Datenverlust möglich
+C:\Users\Felix\Documents\git\captain-comic\comic\comic.c(89,71): warning C4244: "Funktion": Konvertierung von "double" in "Uint32", möglicher Datenverlust
+C:\Users\Felix\Documents\git\captain-comic\comic\comic.c(1046,1): warning C4244: "Initialisierung": Konvertierung von "int16_t" in "uint8_t", möglicher Datenverlust
+C:\Users\Felix\Documents\git\captain-comic\comic\comic.c(1275,17): warning C4267: "Funktion": Konvertierung von "size_t" nach "uint16_t", Datenverlust möglich
+C:\Users\Felix\Documents\git\captain-comic\comic\comic.c(1275,29): warning C4267: "Funktion": Konvertierung von "size_t" nach "uint16_t", Datenverlust möglich
+C:\Users\Felix\Documents\git\captain-comic\comic\comic.c(2265,28): warning C4267: "Funktion": Konvertierung von "size_t" nach "uint8_t", Datenverlust möglich
      Bibliothek "C:\Users\Felix\Documents\git\captain-comic\comic\x64\Library\captain_comic.lib" und Objekt "C:\Users\Felix\Documents\git\captain-comic\comic\x64\Library\captain_comic.exp" werden erstellt.
   Code wird generiert.
-  68 of 68 functions (100.0%) were compiled.
+  2 of 68 functions ( 2.9%) were compiled, the rest were copied from previous compilation.
     0 functions were new in current compilation
-    0 functions had inline decision re-evaluated but remain unchanged
+    1 functions had inline decision re-evaluated but remain unchanged
   Codegenerierung ist abgeschlossen.
   captain_comic.vcxproj -> C:\Users\Felix\Documents\git\captain-comic\comic\x64\Library\captain_comic.dll

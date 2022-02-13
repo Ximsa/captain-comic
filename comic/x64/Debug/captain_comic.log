@@ -4,7 +4,9 @@ C:\Users\Felix\Documents\git\captain-comic\comic\comic.c(89,71): warning C4244: 
 C:\Users\Felix\Documents\git\captain-comic\comic\comic.c(1046,1): warning C4244: "Initialisierung": Konvertierung von "int16_t" in "uint8_t", möglicher Datenverlust
 C:\Users\Felix\Documents\git\captain-comic\comic\comic.c(1275,17): warning C4267: "Funktion": Konvertierung von "size_t" nach "uint16_t", Datenverlust möglich
 C:\Users\Felix\Documents\git\captain-comic\comic\comic.c(1275,29): warning C4267: "Funktion": Konvertierung von "size_t" nach "uint16_t", Datenverlust möglich
-C:\Users\Felix\Documents\git\captain-comic\comic\comic.c(2260,28): warning C4267: "Funktion": Konvertierung von "size_t" nach "uint8_t", Datenverlust möglich
-C:\Users\Felix\Documents\git\captain-comic\comic\comic.c(2297,14): warning C4013: "memset" undefiniert; Annahme: extern mit Rückgabetyp int
-C:\Users\Felix\Documents\git\captain-comic\comic\comic.c(2339): warning C4716: "SDL_main": Muss einen Wert zurückgeben
+C:\Users\Felix\Documents\git\captain-comic\comic\comic.c(2265,28): warning C4267: "Funktion": Konvertierung von "size_t" nach "uint8_t", Datenverlust möglich
+C:\Users\Felix\Documents\git\captain-comic\comic\comic.c(2302,14): warning C4013: "memset" undefiniert; Annahme: extern mit Rückgabetyp int
+C:\Users\Felix\Documents\git\captain-comic\comic\comic.c(2344): warning C4716: "SDL_main": Muss einen Wert zurückgeben
+  LINK : C:\Users\Felix\Documents\git\captain-comic\comic\x64\Debug\captain_comic.exe wurde nicht gefunden oder beim letzten inkrementellen Linkvorgang nicht erstellt; vollständiger Link wird durchgeführt.
+     Bibliothek "C:\Users\Felix\Documents\git\captain-comic\comic\x64\Debug\captain_comic.lib" und Objekt "C:\Users\Felix\Documents\git\captain-comic\comic\x64\Debug\captain_comic.exp" werden erstellt.
   captain_comic.vcxproj -> C:\Users\Felix\Documents\git\captain-comic\comic\x64\Debug\captain_comic.exe

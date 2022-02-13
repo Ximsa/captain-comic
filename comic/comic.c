@@ -1795,9 +1795,14 @@ void try_to_fire()
 }
 
 EXPORTED void tick(uint8_t jump_key_pressed, uint8_t open_key_pressed, uint8_t teleport_key_pressed,
-		 uint8_t left_key_pressed, uint8_t right_key_pressed, uint8_t pause_key_pressed,
-		 uint8_t fire_key_pressed)
+		   uint8_t left_key_pressed, uint8_t right_key_pressed, uint8_t pause_key_pressed,
+		   uint8_t fire_key_pressed)
 {
+  // pretend we're still respsive
+  static SDL_Event event;
+  // poll keyboard events
+  while(SDL_PollEvent(&event));
+  
   // tick
   // If win_counter is nonzero, we are waiting out the clock to start the
   // game end sequence. The game ends when win_counter decrements to 1.

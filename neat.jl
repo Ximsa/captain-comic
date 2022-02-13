@@ -38,3 +38,7 @@ for k in 1:3
     end
 end
 
+
+
+
+Comic.tick(1,1,1)
