@@ -7,6 +7,6 @@ cd(string(pwd(), "/comic"))
 # some basic movement
 Comic.add_instance(1,0,0,1)
 
-for i in 1:100000
+for i in 1:10
     Comic.tick(1)
 end
