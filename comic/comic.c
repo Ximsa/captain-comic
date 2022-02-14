@@ -193,6 +193,11 @@ void init_graphics() // fills every GRAPHIC* structure with pixel values
   INIT_GRAPHICS(GRAPHICS_SCORE_DIGITS);
 }
 
+uint8_t is_black(const uint8_t * color)
+{
+  return color[0] == 0 && color[1] == 0 && color[2] == 0;
+}
+
 // assumes RGBA32
 void blit(uint16_t width, uint16_t height, // dimensions to blit
 	  uint16_t src_x, uint16_t src_y, // source offset
@@ -205,8 +210,10 @@ void blit(uint16_t width, uint16_t height, // dimensions to blit
       for(size_t x = 0; x < width; x++)
 	{
 	  size_t src_index = (y+src_y)*src_width+x+src_x;
-	  if (src_pixels[src_index*4 + 3]
+	  if ((src_pixels[src_index*4 + 3]
+	       && !(is_black(src_pixels + src_index*4) && width==16 && height==8)) // edge case when blitting fireball
 	      || (dest_x >= 232 && dest_y >= 112)) // edge case when blitting collected items
+	      
 	    {
 	      size_t dest_index = (dest_y+y)*dest_width +dest_x+x;
 	      ((uint32_t*)dest_pixels)[dest_index] = ((uint32_t*)src_pixels)[src_index];
@@ -419,9 +426,18 @@ EXPORTED void get_environment(uint8_t * environment_array, uint8_t * flags)
       environment_array[y*PLAYFIELD_WIDTH + x]
 	= current_pt.tiles[(y/2)*MAP_WIDTH_TILES + (camera_x + x)/2] > tileset_buffer.last_passable;
   // fill the comic tiles
-  for(size_t y = comic_y; y < comic_y + 4 && y < MAP_HEIGHT; y++)
-    for(size_t x = comic_x - camera_x; x < comic_x - camera_x + 2; x++)
+  for(int y = comic_y; y < comic_y + 4 && y < MAP_HEIGHT; y++)
+    for(int x = comic_x - camera_x; x < comic_x - camera_x + 2; x++)
       environment_array[y*PLAYFIELD_WIDTH + x] = 3;
+
+  if(!items_collected[current_level_number][current_stage_number])
+    { 
+      uint8_t item_x = current_stage_ptr->item_x;
+      uint8_t item_y = current_stage_ptr->item_y;
+      for(int y = item_y; y < item_y + 2 && y < MAP_HEIGHT; y++)
+	for(int x = item_x - camera_x; x < item_x - camera_x + 2 && x >= 0 && x < PLAYFIELD_HEIGHT; x++)
+	  environment_array[y*PLAYFIELD_WIDTH + x] = 4;
+    }
       
   // fill the flags array
   flags[0] = current_level_number;
@@ -822,7 +838,7 @@ void blit_item_ui()
 }
 
 void handle_item()
-{ // TODO: finish
+{
   // is there an item in this stage?
   if (current_stage_ptr->item_type != ITEM_UNUSED)
     {
@@ -1582,9 +1598,66 @@ void face_or_move_right()
       comic_facing = COMIC_FACING_RIGHT;
     }
 }
-
+// Handle fireball movement for one game tick. Move each active fireball
+// horizontally according to fireball.vel, and vertically according to
+// fireball.corkscrew_phase. Despawn fireballs that exit the playfield. Check
+// for collision between fireballs and enemies.
+// Input:
+//   comic_firepower = maximum number of fireballs there may be
+//   camera_x = fireballs that exit the playfield are despawned
+// Output:
+//   fireballs = colliding fireballs are put in FIREBALL_DEAD state
+//   enemies = colliding enemies are put in ENEMY_STATE_WHITE_SPARK state
+//   score = increased by 300 points for every collision found
 void handle_fireballs()
-{ // TODO: finish
+{
+  if(comic_firepower != 0)
+    {
+      for(int i = 0; i < MAX_NUM_FIREBALLS; i++)
+	{
+	  // Is this slot active?
+	  if(!(fireballs[i].x == FIREBALL_DEAD || fireballs[i].y == FIREBALL_DEAD))
+	    {
+	      fireballs[i].x += fireballs[i].vel;
+	      // check playfield bounds
+	      if(fireballs[i].x - camera_x > PLAYFIELD_WIDTH - 2 ||
+		 fireballs[i].x - camera_x < 0)
+		{ // deactivate
+		  fireballs[i].x = FIREBALL_DEAD;
+		  fireballs[i].y = FIREBALL_DEAD;
+		}
+	      else
+		{ // handle corkscrew
+		  if(comic_has_corkscrew)
+		    {
+		      if(fireballs[i].corkscrew_phase >= 2)
+			{
+			  fireballs[i].y--;
+			  fireballs[i].corkscrew_phase = 1;
+			}
+		      else
+			{
+			  fireballs[i].y++;
+			  fireballs[i].corkscrew_phase = 2;
+			}
+		    }
+		  // animate
+		  fireballs[i].animation++;
+		  if(fireballs[i].animation >= fireballs[i].num_animation_frames)
+		    {
+		      fireballs[i].animation = 0;
+		    }
+		  printf("%i\n",fireballs[i].animation);
+		  uint8_t index = fireballs[i].animation;
+		  blit(16, 8, // width and height
+		       0, 0, // source x and y
+		       8+(fireballs[i].x-camera_x)*8, 8+fireballs[i].y*8, // target x and y 
+		       16, ANIMATION_TABLE_FIREBALL[index], // source buffer
+		       SCREEN_WIDTH, screen_buffer); // target buffer
+		}
+	    }
+	}
+    }
 }
 
 
@@ -1790,15 +1863,70 @@ uint8_t handle_fall_or_jump(uint8_t jump_key_pressed, uint8_t left_key_pressed, 
 
 void increment_fireball_meter()
 { // TODO: finish
+  if(fireball_meter != MAX_FIREBALL_METER)
+    {
+      fireball_meter++;
+      // The fireball meter is conceptually made up to 6 cells, each of which
+      // may be empty, half-full, or full. A half-full cell represents 1 unit
+      // and a full cell represents 2. When the meter increments from even to
+      // odd, we advance a cell from empty to half-full. When the meter
+      // increments from odd to even, we advance a cell from half-full to
+      // full.
+      // number of cells used (final one may be empty or half-full)
+      uint8_t cells_used = (fireball_meter + 1) >> 1;
+      blit(8, 16, // width and height
+	   0, 0, // source x and y
+	   240+cells_used*8, 54, // target x and y 
+	   8, fireball_meter % 2 == 0? GRAPHIC_METER_FULL : GRAPHIC_METER_HALF, // source buffer
+	   SCREEN_WIDTH, screen_buffer); // target buffer
+    }
 }
 
+// Subtract 1 unit from fireball_meter, unless already at MAX_FIREBALL_METER.
+// Output:
+//   fireball_meter = decremented by 1 unless already at 0
 void decrement_fireball_meter()
 { // TODO: finish
+  if(fireball_meter != 0)
+    {
+      // number of cells used (final one may be empty or half-full)
+      uint8_t cells_used = (fireball_meter + 1) >> 1;
+      fireball_meter--;
+      blit(8, 16, // width and height
+	   0, 0, // source x and y
+	   240+cells_used*8, 54, // target x and y 
+	   8, fireball_meter % 2 == 0? GRAPHIC_METER_EMPTY : GRAPHIC_METER_HALF, // source buffer
+	   SCREEN_WIDTH, screen_buffer); // target buffer
+    }
 }
 
+// Shoot a fireball, if there's an open fireball slot in the first
+// comic_firepower slots.
+// Input:
+//   ah = x-coordinate (comic_x)
+//   al = y-coordinate (comic_y + 1)
+//   comic_firepower = number of fireball slots unlocked by Blastola Cola
+//   comic_facing = which direction to shoot the fireball
 void try_to_fire()
-{ // TODO: finish
-  
+{
+  if(comic_firepower != 0)
+    {
+      // look for an open fireball slot
+      for(int i = 0; i < MAX_NUM_FIREBALLS; i++)
+	{
+	  if (fireballs[i].x == FIREBALL_DEAD || fireballs[i].y == FIREBALL_DEAD)
+	    { // found an open slot, Assign x and y coordinates
+	      fireballs[i].x = comic_x;
+	      fireballs[i].y = comic_y + 1;
+	      // Velocity depends on which way Comic is facing.
+	      fireballs[i].vel = comic_facing == COMIC_FACING_LEFT? -2:2;
+	      // assign phase
+	      fireballs[i].corkscrew_phase = 2;
+	      PLAY_SOUND(SOUND_FIRE);
+	      break;
+	    }
+	}
+    }
 }
 
 int32_t comic_standing_still_counter = 0;
@@ -1943,34 +2071,33 @@ EXPORTED double tick(uint8_t jump_key_pressed, uint8_t open_key_pressed, uint8_t
   // check fire input
   if(fire_key_pressed != 0)
     {
-      if(fireball_meter != 0) // The fire key is being pressed. Is the fireball meter depleted?
-	{ // Shoot a fireball.
-	  try_to_fire();
-	  // fireball_meter increases/decreases at a rate of 1 unit per 2 ticks.
-	  // fireball_meter_counter alternates 2, 1, 2, 1, ... to let us know when
-	  // we should adjust the meter. We decrement fireball_meter when
-	  // fireball_meter_counter is 2 (and the fire key is being pressed), and
-	  // increment fireball_meter when fireball_meter_counter is 1 (and the
-	  // fire key is not being pressed).
-	  if(fireball_meter_counter != 1)
-	    { // fireball_meter_counter is 2; decrement fireball_meter and decrement
-	      // fireball_meter_counter.
-	      decrement_fireball_meter();
-	      fireball_meter_counter = 2;
-	    }
-	}
+      if(fireball_meter == 0) // The fire key is being pressed. Is the fireball meter depleted?
+	goto blit_map_and_comic;
+      // Shoot a fireball.
+      try_to_fire();
+      // fireball_meter increases/decreases at a rate of 1 unit per 2 ticks.
+      // fireball_meter_counter alternates 2, 1, 2, 1, ... to let us know when
+      // we should adjust the meter. We decrement fireball_meter when
+      // fireball_meter_counter is 2 (and the fire key is being pressed), and
+      // increment fireball_meter when fireball_meter_counter is 1 (and the
+      // fire key is not being pressed).
+      if(fireball_meter_counter == 1)
+	goto wrap_fireball_meter_counter;
+      // fireball_meter_counter is 2; decrement fireball_meter and decrement
+      // fireball_meter_counter.
+      decrement_fireball_meter();
     }
-  else
-    {
-      fireball_meter_counter--;
-      if(fireball_meter_counter == 0) // TODO: check
-	{ // fireball_meter_counter was 1; increment fireball_meter and wrap
-	  // fireball_meter_counter.
-	  increment_fireball_meter();
-	  fireball_meter_counter = 2;
-	}
-    }
-  // blit_map_and_comic
+  // recover fireball meter
+  fireball_meter_counter--;
+  if(fireball_meter_counter != 0)
+    goto blit_map_and_comic;
+  // fireball_meter_counter was 1; increment fireball_meter and wrap
+  // fireball_meter_counter.
+  increment_fireball_meter();
+ wrap_fireball_meter_counter:
+  fireball_meter_counter = 2;
+
+ blit_map_and_comic:
   blit_map_playfield_offscreen();
   blit_comic_playfield_offscreen();
 
@@ -2359,7 +2486,7 @@ EXPORTED void setup(uint8_t graphics, uint8_t sound, uint8_t skip, int32_t game_
 int main(int argc, char * argv[])
 {
   // parse args
-  setup(1, 1, 1, 2);//graphics_enabled, sound_enabled, 0);
+  setup(1, 1, 1, 1);//graphics_enabled, sound_enabled, 0);
   game_loop();
 }
 

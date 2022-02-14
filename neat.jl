@@ -5,8 +5,8 @@ import .Comic
 cd(string(pwd(), "/comic"))
 
 # some basic movement
-Comic.add_instance(1,0,0,1)
+Comic.add_instance(1,1,1,1,2)
 
 for i in 1:10
-    Comic.tick(1)
+    Comic.tick(1,1,0,0,0,1)
 end

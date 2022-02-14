@@ -716,7 +716,8 @@ uint8_t inhibit_death_by_enemy_collision	= 0;
 
 typedef struct
 {
-  uint8_t y, x, vel, corkscrew_phase, animation, num_animation_frames;
+  uint8_t y, x;
+  int8_t vel, corkscrew_phase, animation, num_animation_frames;
 } fireball;
 fireball fireballs[MAX_NUM_FIREBALLS] = {{.y = FIREBALL_DEAD, .x = FIREBALL_DEAD, .num_animation_frames = 2}};
 
