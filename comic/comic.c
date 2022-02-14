@@ -86,7 +86,7 @@ void wait_keypress()
 
 void wait_n_ticks(uint16_t ticks)
 {
-  if(graphics_enabled || sound_enabled) SDL_Delay((2*1000*ticks/IRQ_0)); // wait for every second IRQ
+  if((graphics_enabled || sound_enabled) && speed > 0) SDL_Delay((2*1000*ticks/(IRQ_0*speed))); // wait for every second IRQ
 }
 
 void init_sound()
@@ -651,6 +651,7 @@ void collect_gold()
 //   score = increased by 2000 points
 void collect_item()
 {
+  fitness += 2000; // item gives 2000 points
   PLAY_SOUND(SOUND_COLLECT_ITEM);
   award_points(20);
   // Mark item as collected in items_collected.
@@ -660,6 +661,8 @@ void collect_item()
     {	
     case ITEM_SHIELD:// Picked up a Shield. Do we already have full HP?
       if(comic_hp == MAX_HP) // If not, schedule MAX_HP units of HP to be awarded in the future.
+	award_extra_life(1);
+      else
 	comic_hp_pending_increase = MAX_HP;
       break;
     case ITEM_CORKSCREW: collect_corkscrew(); break;
@@ -909,6 +912,7 @@ void do_high_scores()
 // Call do_high_scores and then jump to terminate_program.
 void game_over()
 {
+  PLAY_SOUND(SOUND_GAME_OVER);
   blit_map_playfield_offscreen();
   blit(128, 48, // width and height
        0, 0, // source x and y
@@ -1641,7 +1645,7 @@ void comic_dies()
   wait_n_ticks(15);
   if(comic_num_lives == 0)
     {
-      // game over
+      game_over();
     }
   else
     {
@@ -1676,8 +1680,9 @@ void comic_dies()
 //   comic_x_momentum = updated
 //   comic_y_vel = updated
 //   comic_facing = updated
-void handle_fall_or_jump(uint8_t jump_key_pressed, uint8_t left_key_pressed, uint8_t right_key_pressed)
+uint8_t handle_fall_or_jump(uint8_t jump_key_pressed, uint8_t left_key_pressed, uint8_t right_key_pressed)
 {
+  uint8_t died = 0;
   // Are we still in the state where a jump can continue accelerating
   // upward? When comic_jump_counter is 1, the upward part of the jump is
   // over.
@@ -1709,6 +1714,7 @@ void handle_fall_or_jump(uint8_t jump_key_pressed, uint8_t left_key_pressed, uin
   if(comic_y >= PLAYFIELD_HEIGHT + 3)
     { // if so, it's a death by falling
       comic_dies();
+      died = 1;
     }
   // apply gravity
   if(current_level_number == LEVEL_NUMBER_SPACE)
@@ -1759,7 +1765,7 @@ void handle_fall_or_jump(uint8_t jump_key_pressed, uint8_t left_key_pressed, uin
     }
  still_falling_or_jumping:
   comic_animation = COMIC_JUMPING;
-  return;
+  return died;
  hit_the_ground:
   // Above, under .check_solidity_downward, we checked the tile at
   // (comic_x, comic_y + 5) and found it to be solid. But if comic_y is 15
@@ -1779,6 +1785,7 @@ void handle_fall_or_jump(uint8_t jump_key_pressed, uint8_t left_key_pressed, uin
     {
       goto still_falling_or_jumping;
     }
+  return died;
 }
 
 void increment_fireball_meter()
@@ -1794,14 +1801,25 @@ void try_to_fire()
   
 }
 
-EXPORTED void tick(uint8_t jump_key_pressed, uint8_t open_key_pressed, uint8_t teleport_key_pressed,
+int32_t comic_standing_still_counter = 0;
+uint8_t comic_last_x = 0;
+
+EXPORTED double tick(uint8_t jump_key_pressed, uint8_t open_key_pressed, uint8_t teleport_key_pressed,
 		   uint8_t left_key_pressed, uint8_t right_key_pressed, uint8_t pause_key_pressed,
 		   uint8_t fire_key_pressed)
 {
-  // pretend we're still respsive
-  static SDL_Event event;
+  fitness += 1; // surviving is also some kind of plus
+  // pretend we're still respsonive
+  SDL_Event event;
   // poll keyboard events
   while(SDL_PollEvent(&event));
+
+  // are we stuck?
+  uint8_t died = comic_standing_still_counter > 42;
+  comic_standing_still_counter *= died; // reset counter if dead
+  if(comic_last_x == comic_x)
+    comic_standing_still_counter++;
+  comic_last_x = comic_x;
   
   // tick
   // If win_counter is nonzero, we are waiting out the clock to start the
@@ -1839,7 +1857,7 @@ EXPORTED void tick(uint8_t jump_key_pressed, uint8_t open_key_pressed, uint8_t t
 
   // are we jumping or falling?
   if(comic_is_falling_or_jumping != 0)
-    handle_fall_or_jump(jump_key_pressed, left_key_pressed, right_key_pressed); // handle_fall_or_jump jumps back into game_loop.check_pause_input
+    died = died || handle_fall_or_jump(jump_key_pressed, left_key_pressed, right_key_pressed); // handle_fall_or_jump jumps back into game_loop.check_pause_input
   else
     {
       // is the jump key being pressed?
@@ -1850,7 +1868,7 @@ EXPORTED void tick(uint8_t jump_key_pressed, uint8_t open_key_pressed, uint8_t t
 	  if(comic_jump_counter != 1)
 	    { // Initiate a new jump
 	      comic_is_falling_or_jumping = 1;
-	      handle_fall_or_jump(jump_key_pressed, left_key_pressed, right_key_pressed);
+	      died = died || handle_fall_or_jump(jump_key_pressed, left_key_pressed, right_key_pressed);
 	      goto check_pause_input;
 	    }
 	}
@@ -1921,7 +1939,7 @@ EXPORTED void tick(uint8_t jump_key_pressed, uint8_t open_key_pressed, uint8_t t
   if(pause_key_pressed != 0)
     game_pause();
   if(comic_quit)
-    return;
+    return died? NAN : fitness;
   // check fire input
   if(fire_key_pressed != 0)
     {
@@ -1962,6 +1980,7 @@ EXPORTED void tick(uint8_t jump_key_pressed, uint8_t open_key_pressed, uint8_t t
   handle_item();
   draw();
   wait_n_ticks(1);
+  return died? NAN : fitness;
 }
 
 // Main game loop. Block until it's time for a game tick, do one tick's worth of
@@ -2324,11 +2343,12 @@ void load_new_level()
    load_shp_files();
  }
 
-EXPORTED void setup(uint8_t graphics, uint8_t sound, uint8_t skip)
+EXPORTED void setup(uint8_t graphics, uint8_t sound, uint8_t skip, int32_t game_speed)
 {
   skip_intro = skip;
   graphics_enabled = graphics;
   sound_enabled = sound;
+  speed = game_speed;
   if(graphics_enabled) init_UI();
   if(sound_enabled) init_sound();
   if(graphics_enabled || sound_enabled) title_sequence();
@@ -2339,7 +2359,7 @@ EXPORTED void setup(uint8_t graphics, uint8_t sound, uint8_t skip)
 int main(int argc, char * argv[])
 {
   // parse args
-	setup(1, 1, 0);//graphics_enabled, sound_enabled, 0);
+  setup(1, 1, 1, 2);//graphics_enabled, sound_enabled, 0);
   game_loop();
 }
 
@@ -2367,7 +2387,10 @@ EXPORTED void reset()
   comic_has_gold		=	0;
   comic_has_crown		=	0;
   comic_num_treasures		=	0;
-
+  
+  comic_standing_still_counter = 0;
+  
+  fitness = 0;
   score[0] = 0;
   score[1] = 0;
   score[2] = 0;

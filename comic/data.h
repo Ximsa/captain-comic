@@ -51,7 +51,7 @@ uint8_t comic_has_gems		=	0;
 uint8_t comic_has_gold		=	0;
 uint8_t comic_has_crown		=	0;
 uint8_t comic_num_treasures	=	0;
-
+double fitness = 0;
 // The score is an array of 3 bytes, stored in base-100 representation. score[0]
 // is the least significant digit. The number stored here one one-hundredth of
 // the score shown to the player, which always has a "00" appended to the end.
@@ -70,6 +70,7 @@ uint8_t items_collected[8][3]	=	{0};
 
 uint8_t graphics_enabled = 1;
 uint8_t skip_intro = 0;
+int32_t speed = 2;
 // little trick: replace filename with image data later, autoconvert to 1 Byte per Pixel
 uint8_t GRAPHICS_COMIC[][16*32*4] =
   {
