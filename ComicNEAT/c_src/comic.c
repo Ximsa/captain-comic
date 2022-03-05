@@ -92,7 +92,7 @@ void wait_keypress()
 
 void wait_n_ticks(uint16_t ticks)
 {
-  if((graphics_enabled || sound_enabled) && speed > 0) SDL_Delay((2*1000*ticks/(IRQ_0*speed*1.2))); // wait for every second IRQ
+  if((graphics_enabled || sound_enabled) && speed > 0) SDL_Delay((2*1000*ticks/(IRQ_0*speed))); // wait for every second IRQ
 }
 
 void init_sound()
@@ -1107,7 +1107,7 @@ void enemy_behavior_bounce(enemy * foe)
   return;
 
 }
-
+// TODO: finish
 void enemy_behavior_leap(enemy * foe)
 {
   enemy_behavior_bounce(foe);
@@ -1294,7 +1294,7 @@ void handle_enemies()
 		{ // hurt comic
 		  // The collision with an enemy didn't kill Comic, only hurt him. (Or
 		  // he's taking hits while inhibit_death_by_enemy_collision != 0.)
-		  //decrement_comic_hp(); / Todo: uncomment
+		  decrement_comic_hp(); 
 		  goto dying;
 		}
 	      else
@@ -2953,7 +2953,7 @@ void load_new_level()
    load_shp_files();
  }
 
-EXPORTED void setup(uint8_t graphics, uint8_t sound, uint8_t skip, int32_t game_speed)
+EXPORTED void setup(uint8_t graphics, uint8_t sound, uint8_t skip, double game_speed)
 {
   skip_intro = skip;
   graphics_enabled = graphics;

@@ -208,7 +208,7 @@ level LEVEL_DATA_FOREST =
 	.item_type = ITEM_BLASTOLA_COLA,
 	.item_y = 14,
 	.item_x = 12,
-	.exit_l = 2,//EXIT_UNUSED,
+	.exit_l = EXIT_UNUSED,
 	.exit_r = 1,
 	.doors =
 	{

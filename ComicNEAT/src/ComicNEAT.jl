@@ -1,22 +1,18 @@
-# assumes working directory set to project directory
+# !assumes working directory set to project directory!
 module ComicNEAT
-#include("comic.jl") # make module comic "visible"
+
+include("src/comic.jl") # make module comic "visible"
+
+import .Comic
 
 
-#import .Comic
-
-
-
-# change working directory to comic folder for the library to not go haywire
-# it is important to reset the working directory to the comic subdirectory if changed
-#cd(string(pwd(), "/comic"))
 
 # some basic movement
-#Comic.add_instance(1,1,1,1,2)
+Comic.add_instance(1,1,1,1,2)
 
-#for i in 1:10
-#    Comic.tick(1,1,0,0,0,1)
-#end
+for i in 1:1
+    Comic.tick(1,0,0,0,0,1)
+end
 
 
 end # module

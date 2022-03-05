@@ -1,0 +1,7 @@
+import Pkg
+Pkg.add("Plots")
+pwd()
+cd("ComicNEAT/")
+import Pkg
+Pkg.activate()
+Pkg.add("Plots")

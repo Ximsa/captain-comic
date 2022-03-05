@@ -44,7 +44,7 @@ uint8_t comic_firepower		=	0;// how many Blastola Colas Comic has collected
 uint8_t fireball_meter		=	0;
 uint8_t comic_jump_power	=	4;
 uint8_t comic_has_corkscrew	=	0;
-uint8_t comic_has_door_key	=	1;
+uint8_t comic_has_door_key	=	0;
 uint8_t comic_has_lantern	=	0;
 uint8_t comic_has_teleport_wand	=	0;
 uint8_t comic_has_gems		=	0;
@@ -70,7 +70,7 @@ uint8_t items_collected[8][3]	=	{0};
 
 uint8_t graphics_enabled = 1;
 uint8_t skip_intro = 0;
-int32_t speed = 2;
+double speed = 1.0;
 // little trick: replace filename with image data later, autoconvert to 1 Byte per Pixel
 uint8_t GRAPHICS_COMIC[][16*32*4] =
   {
