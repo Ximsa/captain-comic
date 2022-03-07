@@ -430,15 +430,23 @@ EXPORTED void get_environment(uint8_t * environment_array, uint8_t * flags)
       break;
     }
   // fill the array with solid/nonsolid tiles, x and y are in game units
-  for(size_t y = 0; y < MAP_HEIGHT; y++)
-    for(size_t x = 0; x < PLAYFIELD_WIDTH; x++)
+  for(int y = 0; y < MAP_HEIGHT; y++)
+    for(int x = 0; x < PLAYFIELD_WIDTH; x++)
       environment_array[y*PLAYFIELD_WIDTH + x]
 	= current_pt.tiles[(y/2)*MAP_WIDTH_TILES + (camera_x + x)/2] > tileset_buffer.last_passable;
   // fill the comic tiles
   for(int y = comic_y; y < comic_y + 4 && y < MAP_HEIGHT; y++)
     for(int x = comic_x - camera_x; x < comic_x - camera_x + 2; x++)
       environment_array[y*PLAYFIELD_WIDTH + x] = 3;
-
+  // fill enemy tiles
+  for(int i = 0; i < MAX_NUM_ENEMIES; i++){
+    enemy foe = enemies[i];
+    if(foe.state == ENEMY_STATE_SPAWNED)
+      for(int y = foe.y; y < foe.y+2;y++)
+	for(int x = foe.x - camera_x; x < foe.x - camera_x + 2; x++)
+	  if(x >= 0 && x < PLAYFIELD_WIDTH)
+	    environment_array[y*PLAYFIELD_WIDTH + x] = (foe.behavior & ~ENEMY_BEHAVIOR_FAST)+3;
+  }
   if(!items_collected[current_level_number][current_stage_number])
     { 
       uint8_t item_x = current_stage_ptr->item_x;
@@ -2109,7 +2117,7 @@ void handle_fireballs()
 			  ball->x = FIREBALL_DEAD; // deactivate fireball
 			  ball->y = FIREBALL_DEAD;
 			  award_extra_life(3); // 300 points for killing an enemy with fireball
-			  fitness += 0.5;
+			  fitness += 0.1;
 			  PLAY_SOUND(SOUND_HIT_ENEMY);
 			}
 		    }
@@ -2390,12 +2398,19 @@ void try_to_fire()
 
 int32_t comic_standing_still_counter = 0;
 uint8_t comic_last_x = 0;
-
+// visited places: level, stage, visited = 1 or 0
+uint8_t visited_places[8][3][255] = {0};
 EXPORTED double tick(uint8_t jump_key_pressed, uint8_t open_key_pressed, uint8_t teleport_key_pressed,
 		     uint8_t left_key_pressed, uint8_t right_key_pressed, uint8_t pause_key_pressed,
 		     uint8_t fire_key_pressed)
 {
-  fitness += 1; // surviving is also some kind of plus
+  // fitness: reward for unvisited areas
+  if (!visited_places[current_level_number][current_stage_number][comic_x])
+    {
+      visited_places[current_level_number][current_stage_number][comic_x]=1;
+      fitness+=1.0;
+    }
+  
   // pretend we're still respsonive
   SDL_Event event;
   // poll keyboard events
@@ -2483,9 +2498,8 @@ EXPORTED double tick(uint8_t jump_key_pressed, uint8_t open_key_pressed, uint8_t
 	    }
 	}
       // check teleport input
-      if(teleport_key_pressed != 0)
+      if(teleport_key_pressed != 0 && comic_has_teleport_wand)
 	{ // The teleport key is being pressed. Do we have the Teleport Wand?
-	  //if(comic_has_teleport_wand != 0)
 	  begin_teleport();
 	}
       // check left input
@@ -3002,6 +3016,10 @@ EXPORTED void reset()
   comic_standing_still_counter = 0;
   
   fitness = 0;
+  for(int i = 0; i < 8;i++)
+    for(int j = 0; j < 3; j++)
+      for(int k = 0; k < 255; k++)
+	visited_places[i][j][k] = 0;
   score[0] = 0;
   score[1] = 0;
   score[2] = 0;

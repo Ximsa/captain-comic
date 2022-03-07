@@ -5,3 +5,22 @@ cd("ComicNEAT/")
 import Pkg
 Pkg.activate()
 Pkg.add("Plots")
+cd()
+pwd()
+ls()
+readdir()
+readdir()
+length(filter(x -> x=="ComicNEAT", readdir()))
+cd("documents")
+pwd()
+cd("git/captain-comic")
+pwd()
+length(filter(x -> x=="ComicNEAT", readdir()))
+pwd()
+fitness
+Comic.add_instance(2,1,1,1,2)
+2004.0
+NAN
+Nan
+NaN
+Int64(30.983866769659336)

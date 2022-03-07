@@ -48,7 +48,7 @@ function add_instance(instance_id, graphic=1, sound=1, skip_intro=1, speed=1)
     end
 end
 """
-tick(instance_id, (optional) jump, (optional) open_door, (optional) teleport, (optional) left, (optional) right, (optional) pause, (optional) fire)
+tick(instance_id, (optional) jump, (optional) open_door, (optional) teleport, (optional) left, (optional) right, (optional) fire)
 
 tells the game with id "instance_id" to do one tick.
 returns the fitness if comic is still alive, else NAN
@@ -58,11 +58,10 @@ fitness currently gets evaluated by time alive ( and not standing still ) + item
 
 function tick(instance_id, jump=0,
               open_door=0, teleport=0,
-              left=0, right=0,
-              pause=0, fire=0)
+              left=0, right=0, fire=0)
     return ccall(instances[instance_id][:tick], Cdouble,
                  (UInt8,UInt8,UInt8,UInt8,UInt8,UInt8,UInt8),
-                 jump, open_door, teleport, left, right, pause, fire)
+                 jump, open_door, teleport, left, right, 0, fire)
 end
 
 """
@@ -97,7 +96,8 @@ function get_environment(instance_id)
     ccall(instances[instance_id][:get_environment], Cvoid,
           (Ptr{UInt8}, Ptr{UInt8}),
           environment, stats)
-    return environment, stats
+    # environment ranges from 0 to 255
+    return [Float32.(environment) ; Float32.(stats)]
 end
 
 """
@@ -107,4 +107,5 @@ resets the comic instance to the original state
 function reset(instance_id)
     ccall(instances[instance_id][:reset], Cvoid,())
 end
+
 end
