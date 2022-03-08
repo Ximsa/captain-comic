@@ -128,3 +128,13 @@ for i in 1:20 Comic.tick(2) end
 sleep(1)
 graphplot(player)
 graphplot(player)
+end
+input_nodes = 5
+output_nodes = 5
+hidden_nodes = 0
+connectivity = 0.05
+using NEAT
+using .NEAT
+Individual
+ population = map(x -> Individual(input_nodes, output_nodes, hidden_nodes, connectivity),
+                         1:2)
