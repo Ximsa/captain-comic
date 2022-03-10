@@ -433,12 +433,16 @@ function mutate_node(individual::Individual, setting::Setting)
     index = sample(1:length(individual.connections))
     middle_node_id = length(individual.nodes)
     right_node_id = individual.connections[index].right_node_id
-    # redo connection
-    individual.connections[index].right_node_id = middle_node_id
     #create connection from new node to old target
     push!(individual.connections, Connection(
         setting, middle_node_id, right_node_id,
         (2*setting.weight_range)*rand() - setting.weight_range, true))
+    #create connection from old node to new node
+    push!(individual.connections, Connection(
+        setting, left_node_id, middle_node_id,
+        (2*setting.weight_range)*rand() - setting.weight_range, true))
+    #disable original connection
+    individual.connections[index].enabled = false
 end
 
 # mutates an individual up to n times
