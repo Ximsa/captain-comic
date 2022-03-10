@@ -92,7 +92,7 @@ end
 mutable struct Population
     setting::Setting
     species::Vector{Species}
-    function Population(input_nodes, output_nodes, connectivity = 0.2, weight_mutation=1, connection_mutation=1, node_mutation=1, population_size=192, weight_range=20.0)
+    function Population(input_nodes, output_nodes, connectivity = 0.2, weight_mutation=1, connection_mutation=1, node_mutation=1, population_size=768, weight_range=20.0)
         target_species = Int(floor(population_size^(1.0/3)))
         # create setting struct
         setting = Setting(0,Dict(),population_size,weight_range,10.0,
@@ -368,9 +368,10 @@ function has_connection(node_a_id, node_b_id, connections::Vector{Connection})
     return false
 end
 
-# 75% adds a connection, 25% toggles an existing connection on or off
+# 50% adds a connection,  25% removes connection, 25% toggles an existing connection on or off
 function mutate_connection(individual::Individual,setting::Setting)
-    if(rand() < 0.75) # add connection
+    decision = rand()
+    if(decision < 0.5) # add connection
         for i in 1:20 # retry up to 20 times
             node_a_id, node_b_id = sample(1:length(individual.nodes),2,replace=false)
             node_a_id, node_b_id = individual.nodes[node_a_id].rank < individual.nodes[node_b_id].rank ? (node_a_id, node_b_id) : (node_b_id, node_a_id)
@@ -386,19 +387,24 @@ function mutate_connection(individual::Individual,setting::Setting)
                 break
             end
         end
-    else # toggle connection
+    elseif(decision < 0.75) # toggle connection
         index = sample(1:length(individual.connections))
         individual.connections[index].enabled = !individual.connections[index].enabled
+    else # remove connection
+        index = sample(1:length(individual.connections))
+        deleteat!(individual.connections, index)
     end
 end
 
-# 90% modify weight by up to 20%, 10% new weight
+# 90% modify weight by up to 20%, 10% new weight, 50% chance for a connection to be selected
 function mutate_weight(individual::Individual,setting::Setting)
-    index = sample(1:length(individual.connections))
-    if(rand() < 0.9) # modify
-        individual.connections[index].weight *= rand()*0.2
-    else  # new weight
-        individual.connections[index].weight = (2*setting.weight_range)*rand() - setting.weight_range
+    indices = sample(1:length(individual.connections), Int(floor(length(individual.connections)/2)), replace=false)
+    for index in indices
+        if(rand() < 0.9) # modify
+            individual.connections[index].weight *= rand()*0.2
+        else  # new weight
+            individual.connections[index].weight = (2*setting.weight_range)*rand() - setting.weight_range
+        end
     end
 end
 
@@ -422,7 +428,7 @@ end
 # mutates an individual up to n times
 function mutate(individual::Individual, setting::Setting)
     # mutate up to 11 times
-    num_mutations = Int(floor(rand()*12))
+    num_mutations = Int(floor(rand()*5))
     funs = sample([mutate_weight, mutate_connection, mutate_node],
                   Weights([setting.weight_mutation, setting.connection_mutation, setting.node_mutation]),
                   num_mutations)
@@ -437,7 +443,7 @@ function perform_crossover_and_mutation(population::Population)
     for kind in population.species
         individuals = kind.individuals
         weights = Weights(map(individual->(individual.fitness+1)^2, individuals))
-        next_individuals = []        
+        next_individuals = []
         offset = 1
         if(length(individuals) > 1) # elitism: keep best individual - but only if the species has more than 1 individual
             push!(next_individuals, deepcopy(argmax(x->x.fitness, individuals)))

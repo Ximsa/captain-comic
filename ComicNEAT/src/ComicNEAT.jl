@@ -17,7 +17,7 @@ using .NEAT
 function run_individual(individual::Individual, instance_id::Int, n_output::Int)
     # start with a fitness of 1
     fitness = 1
-    last_fitness = 0
+    last_fitness = 0.1
     counter = 0
     Comic.tick(instance_id)
     while(true) # run player
@@ -56,30 +56,44 @@ function neat_step(population::Population, gen::Int, comic_train, comic_view,  n
     end
     # now every instance is evaluates, show best
     print(run_individual(best_individual, comic_view, n_output))
-    println(" generation ", gen, " fitness: ", best_fitness, "\t species: ", length(population.species),"/",population.setting.target_species, " - ",Int(floor(population.setting.species_threshold)))
+    println(" generation ", gen, " fitness: ", best_fitness, " species: ", length(population.species),"/",population.setting.target_species, " - ",Int(floor(population.setting.species_threshold)), "\t#nodes: ", length(best_individual.nodes), "\t#connections: ", length(filter(x->x.enabled,best_individual.connections)))
     Comic.reset(comic_view)
     # generate next gen
-    push!(generations,population)
+    push!(generations,deepcopy(population))
     next_generation(population)
 end
 
 
 function test()
     # create train and view instance
-    comic_train = 3
-    comic_view = 2
+    comic_train = 6
+    comic_view = 4
     Comic.add_instance(comic_train,0,0,1,-1)
     Comic.add_instance(comic_view,1,1,1,1)
     # create initial population
     environment = Comic.get_environment(comic_train)
     n_input = length(environment)
     n_output = 6
-    population = Population(n_input,n_output)
+    a = rand()
+    b = rand()
+    c = rand()
+    d = rand()
+    println(a," ",b," ",c, " ",d)
+    population = Population(n_input,n_output,a,b,c,d, 2048)
     gen = 0
     last_best_fitness = 0
-    while(true) # for every generation
-        neat_step(population, gen, comic_train, comic_view, n_input, n_output)
-        gen+=1
+    try
+        while(true) # for every generation
+            neat_step(population, gen, comic_train, comic_view, n_input, n_output)
+            gen+=1
+        end
+    catch e
+        if e isa InterruptException
+            # cleanup
+            println("terminated by user")
+        else
+            rethrow(e)
+        end
     end
 end
 test()
