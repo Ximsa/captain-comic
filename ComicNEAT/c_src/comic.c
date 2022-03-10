@@ -688,7 +688,7 @@ void collect_gold()
 //   score = increased by 2000 points
 void collect_item()
 {
-  //fitness += 128; // item gives 2000 points
+  fitness += 256; // item gives 2000 points
   PLAY_SOUND(SOUND_COLLECT_ITEM);
   award_points(20);
   // Mark item as collected in items_collected.
@@ -1306,7 +1306,8 @@ void handle_enemies()
 		{ // hurt comic
 		  // The collision with an enemy didn't kill Comic, only hurt him. (Or
 		  // he's taking hits while inhibit_death_by_enemy_collision != 0.)
-		  decrement_comic_hp(); 
+		  decrement_comic_hp();
+		  fitness*=0.99;
 		  goto dying;
 		}
 	      else
@@ -2463,7 +2464,7 @@ EXPORTED double tick(uint8_t jump_key_pressed, uint8_t open_key_pressed, uint8_t
       handle_teleport(); // skip blitting the map and Comic, because handle_teleport does it
       goto handle_nonplayer_actors;
     }
-
+  uint8_t jump_initiated = 0;
   // are we jumping or falling?
   if(comic_is_falling_or_jumping != 0)
     died = died || handle_fall_or_jump(jump_key_pressed, left_key_pressed, right_key_pressed); // handle_fall_or_jump jumps back into game_loop.check_pause_input
@@ -2478,7 +2479,7 @@ EXPORTED double tick(uint8_t jump_key_pressed, uint8_t open_key_pressed, uint8_t
 	    { // Initiate a new jump
 	      comic_is_falling_or_jumping = 1;
 	      died = died || handle_fall_or_jump(jump_key_pressed, left_key_pressed, right_key_pressed);
-	      goto check_pause_input;
+	      jump_initiated = 1;
 	    }
 	}
       else
@@ -2504,6 +2505,8 @@ EXPORTED double tick(uint8_t jump_key_pressed, uint8_t open_key_pressed, uint8_t
 		}
 	    }
 	}
+      if(jump_initiated)
+	goto check_pause_input;
       // check teleport input
       if(teleport_key_pressed != 0 && comic_has_teleport_wand)
 	{ // The teleport key is being pressed. Do we have the Teleport Wand?

@@ -412,6 +412,12 @@ function mutate_connection(individual::Individual,setting::Setting)
     end
 end
 
+function mutate_connections(individual::Individual,setting::Setting)
+    for i in 1:Int(floor(rand()*12))
+        mutate_connection(individual::Individual,setting::Setting)
+    end
+end
+
 # 90% modify weight by up to 20%, 10% new weight, 50% chance for a connection to be selected
 function mutate_weight(individual::Individual,setting::Setting)
     indices = sample(1:length(individual.connections), Int(floor(length(individual.connections)/2)), replace=false)
@@ -450,7 +456,7 @@ end
 function mutate(individual::Individual, setting::Setting)
     # mutate up to 11 times
     num_mutations = Int(floor(rand()*4))
-    funs = sample([mutate_weight, mutate_connection, mutate_node],
+    funs = sample([mutate_weight, mutate_connections, mutate_node],
                   Weights([setting.weight_mutation, setting.connection_mutation, setting.node_mutation]),
                   num_mutations)
     for fun in funs
