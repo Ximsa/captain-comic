@@ -133,7 +133,7 @@ function Individual(setting::Setting)
                 (2*setting.weight_range)*rand() - setting.weight_range, true))
         end
     end
-    setting.species_threshold = max(setting.species_threshold, sqrt(length(connections)+length(nodes)))
+    setting.species_threshold = max(setting.species_threshold, length(connections)/2)
     return sort(Individual(floor(100*rand()),nodes,connections))
 end
 
@@ -270,10 +270,17 @@ function distance(a::Individual, b::Individual)
     # count excess id's
     excess = (length(as)-ai+1)+(length(bs)-bi+1)
     N = length(as) > length(bs) ? length(as) : length(bs)
-    return 1*excess/N+1*disjoint/N+0.1*weight_sum/weight_count
+    return 1*excess/N+1*disjoint/N+1*weight_sum/weight_count
 end
 
 function speciate(population::Population)
+    # repartition species: select random representant from each species
+    representants = map(
+        function(individual) # sort connections
+            sort!(individual.connections, by=connection->connection.innovation_id)
+            return individual
+        end,
+        map(x->sample(x.individuals), population.species))
     # flatten population list and sort connections by innovation id
     individuals = map(
         function(individual) # sort connections
@@ -281,20 +288,29 @@ function speciate(population::Population)
             return individual
         end,
         vcat(map(x->x.individuals, population.species)...)) # flatten population
-    # redo speciation
+    # reset specification
     for species in population.species
-        representant = sample(species.individuals)
-        species.individuals, individuals = split_by(
-            x->distance(x,representant) < population.setting.species_threshold,
-            individuals)
+        species.individuals = []
     end
-    # push leftovers into one species
-    push!(population.species, Species(0,0,individuals))
+    # assign each individual to a species
+    for individual in individuals
+        distances = map(representant -> let
+                            d=distance(individual, representant)
+                            d==0 ? population.setting.species_threshold : d
+                        end,
+                        representants)
+        if(min(distances...) > population.setting.species_threshold) # create new species
+            push!(population.species, Species(0,0,[individual]))
+            push!(representants, individual)
+        else # append to existing species
+            push!(population.species[argmin(distances)].individuals, individual)
+        end
+    end
     # delete empty species
     filter!(species -> !isempty(species.individuals), population.species)
     # recalculate species_threshold
-    species_miss = length(population.species) - population.setting.target_species
-    population.setting.species_threshold += species_miss * 0.3
+    population.setting.species_threshold +=
+        (length(population.species) - population.setting.target_species) * 0.3
 end
 
 function survivor_selection(population::Population)
@@ -428,7 +444,7 @@ end
 # mutates an individual up to n times
 function mutate(individual::Individual, setting::Setting)
     # mutate up to 11 times
-    num_mutations = Int(floor(rand()*5))
+    num_mutations = Int(floor(1+rand()*sqrt(length(individual.connections))))
     funs = sample([mutate_weight, mutate_connection, mutate_node],
                   Weights([setting.weight_mutation, setting.connection_mutation, setting.node_mutation]),
                   num_mutations)
