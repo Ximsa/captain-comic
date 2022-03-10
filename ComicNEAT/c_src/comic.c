@@ -1306,7 +1306,8 @@ void handle_enemies()
 		{ // hurt comic
 		  // The collision with an enemy didn't kill Comic, only hurt him. (Or
 		  // he's taking hits while inhibit_death_by_enemy_collision != 0.)
-		  decrement_comic_hp(); 
+		  decrement_comic_hp();
+		  fitness*=0.99;
 		  goto dying;
 		}
 	      else
