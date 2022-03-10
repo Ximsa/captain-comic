@@ -91,6 +91,7 @@ function test()
         while(true) # for every generation
             neat_step(population, gen, comic_train, comic_view, n_input, n_output, runid)
             gen+=1
+            ccall(:jl_gc_collect, Cvoid, (Cint,), 1)
         end
     catch e
         if e isa InterruptException
