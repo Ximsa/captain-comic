@@ -442,7 +442,7 @@ EXPORTED void get_environment(uint8_t * environment_array, uint8_t * flags)
       environment_array[(comic_y/2+1)*PLAYFIELD_WIDTH/2 + (comic_x - camera_x)/2] = 3;
     }
   // fill enemy tiles
-  /*for(int i = 0; i < MAX_NUM_ENEMIES; i++){
+  for(int i = 0; i < MAX_NUM_ENEMIES; i++){
     enemy foe = enemies[i];
     if(foe.state == ENEMY_STATE_SPAWNED)
       {
@@ -451,7 +451,7 @@ EXPORTED void get_environment(uint8_t * environment_array, uint8_t * flags)
 	  environment_array[(foe.y/2)*PLAYFIELD_WIDTH/2 + x/2]
 	    = (foe.behavior & ~ENEMY_BEHAVIOR_FAST)+3;
       }
-      }*/
+  }
   /*if(!items_collected[current_level_number][current_stage_number])
     { 
       uint8_t item_x = current_stage_ptr->item_x;
