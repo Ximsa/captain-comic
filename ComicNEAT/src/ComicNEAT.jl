@@ -7,15 +7,14 @@ end
 
 #module ComicNEAT
 using(JLD)
-include("src/comic.jl") # make module comic "visible"
+include("src/Comic.jl") # make module comic "visible"
 import .Comic # do not import .Comic twice! it will reset the added instances tracking potentially resulting in a segfault
 
 
 include("src/NEAT.jl")
-
 using .NEAT
 
-function run_individual(individual::Main.NEAT.Individual, instance_id::Int, n_output::Int)
+function run_individual(individual::Individual, instance_id::Int, n_output::Int)
     # start with a fitness of 1
     fitness = 1
     last_fitness = 0
@@ -29,7 +28,7 @@ function run_individual(individual::Main.NEAT.Individual, instance_id::Int, n_ou
         if(fitness > last_fitness)
             counter=0
         else
-            counter +=1
+            counter+=1
         end
         if(isnan(fitness) || counter > 128) # comic died
             break;
@@ -75,7 +74,7 @@ function test()
     environment = Comic.get_environment(comic_train)
     n_input = length(environment)
     n_output = 6
-    population = Population(n_input,n_output,196)
+    population = Population(n_input,n_output)
     gen = 0
     last_best_fitness = 0
     while(true) # for every generation

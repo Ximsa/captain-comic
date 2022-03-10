@@ -69,3 +69,14 @@ run_individual(generations[8].species[1].individuals[1], 2, 6)
 run_individual(generations[8].species[1].individuals[1], 2, 6)
 run_individual(generations[8].species[1].individuals[1], 2, 6)
  generation 66 fitness: 143.0	 species: 7/5 - 34
+foo = Population(5,5)
+graphplot(foo)
+graphplot(foo.species[1].individual[1])
+graphplot(foo.species[1].individuals[1])
+graphplot(foo.species[1].individuals[1])
+1.0 generation 34 fitness: 77.0	 species: 10/5 - 61
+generations
+graphplot(generations[].species[1].individual[1])
+length(generations)
+graphplot(generations[35].species[1].individual[1])
+graphplot(generations[35].species[1].individuals[1])

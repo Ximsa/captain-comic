@@ -1,3 +1,4 @@
+
 module NEAT
 
 using GLMakie
@@ -91,10 +92,7 @@ end
 mutable struct Population
     setting::Setting
     species::Vector{Species}
-    function Population(input_nodes, output_nodes,
-                        population_size=192, weight_range=20.0,
-                        weight_mutation=0.6, connection_mutation=0.1, node_mutation=0.1)
-        connectivity = 1.0/sqrt(input_nodes)
+    function Population(input_nodes, output_nodes, connectivity = 0.2, weight_mutation=1, connection_mutation=1, node_mutation=1, population_size=192, weight_range=20.0)
         target_species = Int(floor(population_size^(1.0/3)))
         # create setting struct
         setting = Setting(0,Dict(),population_size,weight_range,10.0,
@@ -118,7 +116,7 @@ function Individual(setting::Setting)
     first = true
     for id in 1:setting.input_n
         push!(nodes, Node(-1, input, 0))
-        if(rand() < 0.6 || first)
+        if(rand() < setting.connectivity || first)
             first = false
             push!(connections, Connection(
                 setting, id, sample(setting.input_n+1:setting.input_n+setting.output_n+1),
@@ -129,12 +127,11 @@ function Individual(setting::Setting)
     for id in 2+setting.input_n:setting.input_n+setting.output_n+1
         push!(nodes, Node(-1, output, 0))
         #add connections from hidden node to output nodes
-        if(rand() < 0.4)
+        if(rand() < setting.connectivity)
             push!(connections, Connection(
                 setting, setting.input_n + 1, id,
                 (2*setting.weight_range)*rand() - setting.weight_range, true))
         end
-        
     end
     setting.species_threshold = max(setting.species_threshold, sqrt(length(connections)+length(nodes)))
     return sort(Individual(floor(100*rand()),nodes,connections))
@@ -204,13 +201,13 @@ function graphplot(individual::Individual)
                 n_nodes = max(n_nodes, connection.left_node_id, connection.right_node_id)
                 Edge(connection.left_node_id, connection.right_node_id)
             else
-                nothing
+                Edge(0, 0)
             end,
             individual.connections)))
-    xs, ys, paths = solve_positions(Zarate(), graph);
+    #xs, ys, paths = solve_positions(Zarate(), graph);
     # plot graph
-    lay = _ -> Point.(zip(xs,ys))
-    graphplot(graph, layout=lay, nlabels=(map(string,1:length(individual.nodes))[1:n_nodes]))
+    #lay = _ -> Point.(zip(xs,ys))
+    graphplot(graph, nlabels=(map(string,1:length(individual.nodes))[1:n_nodes]))
 end
 
 # runs the network with given input vector
@@ -374,17 +371,21 @@ end
 # 75% adds a connection, 25% toggles an existing connection on or off
 function mutate_connection(individual::Individual,setting::Setting)
     if(rand() < 0.75) # add connection
-        node_a_id, node_b_id = sort(sample(1:length(individual.nodes),2,replace=false))
-        node_a_id, node_b_id = individual.nodes[node_a_id].rank < individual.nodes[node_b_id].rank ? (node_a_id, node_b_id) : (node_b_id, node_a_id)
-        if(individual.nodes[node_a_id].rank < 0 # unranked node
-            || individual.nodes[node_a_id].type == output # output has no outgoing conns
-            || individual.nodes[node_a_id].type == input # input nodes have no incoming conns
-            || has_connection(node_a_id, node_b_id, individual.connections))
-            return
+        for i in 1:20 # retry up to 20 times
+            node_a_id, node_b_id = sample(1:length(individual.nodes),2,replace=false)
+            node_a_id, node_b_id = individual.nodes[node_a_id].rank < individual.nodes[node_b_id].rank ? (node_a_id, node_b_id) : (node_b_id, node_a_id)
+            if(individual.nodes[node_a_id].rank < 0 # unranked node
+                || individual.nodes[node_a_id].type == output # output has no outgoing conns
+                || individual.nodes[node_b_id].type == input # input nodes have no incoming conns
+                || has_connection(node_a_id, node_b_id, individual.connections))
+                continue
+            else  # valid connection
+                push!(individual.connections, Connection(
+                    setting, node_a_id, node_b_id,
+                    (2*setting.weight_range)*rand() - setting.weight_range, true))
+                break
+            end
         end
-        push!(individual.connections, Connection(
-            setting, node_a_id, node_b_id,
-            (2*setting.weight_range)*rand() - setting.weight_range, true))
     else # toggle connection
         index = sample(1:length(individual.connections))
         individual.connections[index].enabled = !individual.connections[index].enabled
@@ -421,7 +422,7 @@ end
 # mutates an individual up to n times
 function mutate(individual::Individual, setting::Setting)
     # mutate up to 11 times
-    num_mutations = Int(floor(rand()*4))
+    num_mutations = Int(floor(rand()*12))
     funs = sample([mutate_weight, mutate_connection, mutate_node],
                   Weights([setting.weight_mutation, setting.connection_mutation, setting.node_mutation]),
                   num_mutations)
