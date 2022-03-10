@@ -7,6 +7,9 @@ end
 
 #module ComicNEAT
 using(JLD)
+using Serialization
+
+
 include("Comic.jl") # make module comic "visible"
 import .Comic # do not import .Comic twice! it will reset the added instances tracking potentially resulting in a segfault
 
@@ -38,8 +41,8 @@ function run_individual(individual::Individual, instance_id::Int, n_output::Int)
     return last_fitness
 end
 
-generations = []
-function neat_step(population::Population, gen::Int, comic_train, comic_view,  n_input, n_output)
+best = nothing
+function neat_step(population::Population, gen::Int, comic_train, comic_view,  n_input, n_output, runid)
     #train players
     best_individual = nothing
     best_fitness = 0
@@ -58,8 +61,9 @@ function neat_step(population::Population, gen::Int, comic_train, comic_view,  n
     print(run_individual(best_individual, comic_view, n_output))
     println(" generation ", gen, " fitness: ", best_fitness, " species: ", length(population.species),"/",population.setting.target_species, " - ",Int(floor(population.setting.species_threshold)), "\t#nodes: ", length(best_individual.nodes), "\t#connections: ", length(filter(x->x.enabled,best_individual.connections)))
     Comic.reset(comic_view)
+    #serialize(string(runid,"_",gen), population)
     # generate next gen
-    push!(generations,Pair(deepcopy(population), deepcopy(best_individual)))
+    global best = Pair(deepcopy(population), deepcopy(best_individual))
     next_generation(population)
 end
 
@@ -82,10 +86,12 @@ function test()
     population = Population(n_input,n_output,a,b,c,d, 2048)
     gen = 0
     last_best_fitness = 0
+    runid = string("runs/",floor(a*100),"-",floor(b*100),"-",floor(c*100),"-",floor(d*100))
     try
         while(true) # for every generation
-            neat_step(population, gen, comic_train, comic_view, n_input, n_output)
+            neat_step(population, gen, comic_train, comic_view, n_input, n_output, runid)
             gen+=1
+            ccall(:jl_gc_collect, Cvoid, (Cint,), 1)
         end
     catch e
         if e isa InterruptException
