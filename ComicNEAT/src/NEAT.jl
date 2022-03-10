@@ -318,13 +318,13 @@ function survivor_selection(population::Population)
             sum_fitness += individual.fitness
             species_fitness[species_id] += individual.fitness
         end
-        species_fitness[species_id] /= size
+        species_fitness[species_id] /= (size + 0.0000001)
     end
-    average_fitness = sum_fitness / n_fitness
+    average_fitness = sum_fitness / (n_fitness + 0.000001)
     total_offsprings = 0
     # determine allowed offspring count
     for species_id in 1:length(population.species)
-        offspring_count = floor(length(population.species[species_id].individuals) * species_fitness[species_id] / average_fitness)
+        offspring_count = floor(length(population.species[species_id].individuals) * species_fitness[species_id] / (average_fitness + 0.000001))
         population.species[species_id].n_offspring = offspring_count
         total_offsprings+=offspring_count
     end

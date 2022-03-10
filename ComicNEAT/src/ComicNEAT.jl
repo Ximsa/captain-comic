@@ -51,7 +51,7 @@ function neat_step(population::Population, gen::Int, comic_train, comic_view,  n
                 best_fitness = fitness
                 best_individual = individual
             end
-            individual.fitness = fitness
+            individual.fitness = isnan(fitness) ? 1 : fitness
         end
     end
     # now every instance is evaluates, show best
