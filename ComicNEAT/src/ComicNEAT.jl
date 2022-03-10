@@ -7,11 +7,11 @@ end
 
 #module ComicNEAT
 using(JLD)
-include("Comic.jl") # make module comic "visible"
+include("src/Comic.jl") # make module comic "visible"
 import .Comic # do not import .Comic twice! it will reset the added instances tracking potentially resulting in a segfault
 
 
-include("NEAT.jl")
+include("src/NEAT.jl")
 using .NEAT
 
 function run_individual(individual::Individual, instance_id::Int, n_output::Int)
@@ -64,7 +64,7 @@ function neat_step(population::Population, gen::Int, comic_train, comic_view,  n
 end
 
 
-function test(start_pop::Population = nothing)
+function test()
     # create train and view instance
     comic_train = 3
     comic_view = 4
@@ -74,14 +74,12 @@ function test(start_pop::Population = nothing)
     environment = Comic.get_environment(comic_train)
     n_input = length(environment)
     n_output = 6
-    if isnothing(start_pop)
-        a = rand()
-        b = rand()
-        c = rand()
-        d = rand()
-        println(a," ",b," ",c, " ",d)
-        population = Population(n_input,n_output,a,b,c,d, 2048)
-    end
+    a = rand()
+    b = rand()
+    c = rand()
+    d = rand()
+    println(a," ",b," ",c, " ",d)
+    population = Population(n_input,n_output,a,b,c,d, 2048)
     gen = 0
     last_best_fitness = 0
     try
