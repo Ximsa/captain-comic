@@ -449,7 +449,7 @@ end
 # mutates an individual up to n times
 function mutate(individual::Individual, setting::Setting)
     # mutate up to 11 times
-    num_mutations = Int(floor(1+rand()*sqrt(length(individual.connections))))
+    num_mutations = Int(floor(rand()*4))
     funs = sample([mutate_weight, mutate_connection, mutate_node],
                   Weights([setting.weight_mutation, setting.connection_mutation, setting.node_mutation]),
                   num_mutations)

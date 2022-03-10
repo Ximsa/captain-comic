@@ -3022,6 +3022,11 @@ EXPORTED void reset()
   comic_num_treasures		=	0;
   
   comic_standing_still_counter = 0;
+
+  for(int i = 0; i < MAX_NUM_ENEMIES; i++){
+    enemies[i].state = ENEMY_STATE_DESPAWNED;
+    enemies[i].spawn_timer_and_animation = 0;
+  }
   
   fitness = 0;
   for(int i = 0; i < 8;i++)
