@@ -24,3 +24,48 @@ NAN
 Nan
 NaN
 Int64(30.983866769659336)
+Population(5,5)
+Population(900,5)
+next_generation
+next_generation(Population(900,5))
+next_generation(Population(900,5))
+next_generation(Population(900,5))
+@time mutable struct Individual
+    fitness::Float32
+    nodes::Vector{Node}
+    connections::Vector{Connection}
+end
+
+test()
+test()
+test()
+test()
+test()
+test()
+test()
+generation 65	fitness: 61.0	 species: 5/4 - 27	 largest net: 14
+test()
+test (generic function with 1 method)
+using Pkg()
+using Pkg
+Pkg.add("JLD")
+@time 1+1
+ generation 13	fitness: 2071.0	 species: 1/6 - 71	 largest net: 96   8.982261 seconds (1.90 M allocations: 293.522 MiB, 0.65% gc time, 0.16% compilation time)
+run_individual(generations[5].species[1].individuals[1], 2, 6)
+run_individual(generations[5].species[1].individuals[1], 2, 6)
+run_individual(generations[5].species[1].individuals[2], 2, 6)
+generations[5].species[1].individuals[2]
+generations[5].species[1].individuals
+generations[1].species[1].individuals
+generations[2].species[1].individuals
+test()
+nd
+generations
+run_individual(generations[8].species[1].individuals[1], 2, 6)
+run_individual(generations[8].species[1].individuals[1], 2, 6)
+run_individual(generations[8].species[1].individuals[1], 2, 6)
+run_individual(generations[8].species[1].individuals[1], 2, 6)
+run_individual(generations[8].species[1].individuals[1], 2, 6)
+run_individual(generations[8].species[1].individuals[1], 2, 6)
+run_individual(generations[8].species[1].individuals[1], 2, 6)
+ generation 66 fitness: 143.0	 species: 7/5 - 34

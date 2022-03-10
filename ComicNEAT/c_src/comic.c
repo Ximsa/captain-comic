@@ -411,8 +411,8 @@ uint8_t is_solid(uint8_t x, uint8_t y)
     return index_of_tile_at_coordinates(current_pt, x, y) > tileset_buffer.last_passable;
 }
 
-// returns the currently visible area (24*20 tiles) and global state
-// environment_array should be of size MAP_HEIGHT * PLAYFIELD_WIDTH
+// returns the currently visible area (12*10 tiles) and global state(14)
+// environment_array should be of size MAP_HEIGHT_TILES * PLAYFIELD_WIDTH/2
 EXPORTED void get_environment(uint8_t * environment_array, uint8_t * flags) 
 {
   // get the current tile information
@@ -429,32 +429,36 @@ EXPORTED void get_environment(uint8_t * environment_array, uint8_t * flags)
       current_pt = pt2;
       break;
     }
-  // fill the array with solid/nonsolid tiles, x and y are in game units
-  for(int y = 0; y < MAP_HEIGHT; y++)
-    for(int x = 0; x < PLAYFIELD_WIDTH; x++)
-      environment_array[y*PLAYFIELD_WIDTH + x]
-	= current_pt.tiles[(y/2)*MAP_WIDTH_TILES + (camera_x + x)/2] > tileset_buffer.last_passable;
+  // fill the array with solid/nonsolid tiles, x and y are in tile units
+  for(int y = 0; y < MAP_HEIGHT_TILES; y++)
+    for(int x = 0; x < PLAYFIELD_WIDTH/2; x++)
+      environment_array[y*PLAYFIELD_WIDTH/2 + x] =
+	current_pt.tiles[y*MAP_WIDTH_TILES + (camera_x/2 + x)] > tileset_buffer.last_passable;
+
   // fill the comic tiles
-  for(int y = comic_y; y < comic_y + 4 && y < MAP_HEIGHT; y++)
-    for(int x = comic_x - camera_x; x < comic_x - camera_x + 2; x++)
-      environment_array[y*PLAYFIELD_WIDTH + x] = 3;
+  if(comic_y/2+1 < MAP_HEIGHT_TILES && (comic_x - camera_x)/2 > 0)
+    {
+      environment_array[(comic_y/2)*PLAYFIELD_WIDTH/2 + (comic_x - camera_x)/2] = 3;
+      environment_array[(comic_y/2+1)*PLAYFIELD_WIDTH/2 + (comic_x - camera_x)/2] = 3;
+    }
   // fill enemy tiles
   for(int i = 0; i < MAX_NUM_ENEMIES; i++){
     enemy foe = enemies[i];
     if(foe.state == ENEMY_STATE_SPAWNED)
-      for(int y = foe.y; y < foe.y+2;y++)
-	for(int x = foe.x - camera_x; x < foe.x - camera_x + 2; x++)
-	  if(x >= 0 && x < PLAYFIELD_WIDTH)
-	    environment_array[y*PLAYFIELD_WIDTH + x] = (foe.behavior & ~ENEMY_BEHAVIOR_FAST)+3;
+      {
+	int x = (foe.x - camera_x);
+	if(x >= 0 && x < PLAYFIELD_WIDTH)
+	  environment_array[(foe.y/2)*PLAYFIELD_WIDTH/2 + x/2]
+	    = (foe.behavior & ~ENEMY_BEHAVIOR_FAST)+3;
+      }
   }
-  if(!items_collected[current_level_number][current_stage_number])
+  /*if(!items_collected[current_level_number][current_stage_number])
     { 
       uint8_t item_x = current_stage_ptr->item_x;
       uint8_t item_y = current_stage_ptr->item_y;
-      for(int y = item_y; y < item_y + 2 && y < MAP_HEIGHT; y++)
-	for(int x = item_x - camera_x; x < item_x - camera_x + 2 && x >= 0 && x < PLAYFIELD_HEIGHT; x++)
-	  environment_array[y*PLAYFIELD_WIDTH + x] = 4;
-    }
+      if(item_x >= 0 && item_x < PLAYFIELD_WIDTH)
+	environment_array[(item_y/2)*PLAYFIELD_WIDTH/2 + item_x/2] = 4;
+	}*/
       
   // fill the flags array
   flags[0] = current_level_number;
@@ -684,7 +688,7 @@ void collect_gold()
 //   score = increased by 2000 points
 void collect_item()
 {
-  fitness += 2000; // item gives 2000 points
+  //fitness += 128; // item gives 2000 points
   PLAY_SOUND(SOUND_COLLECT_ITEM);
   award_points(20);
   // Mark item as collected in items_collected.
@@ -2117,7 +2121,7 @@ void handle_fireballs()
 			  ball->x = FIREBALL_DEAD; // deactivate fireball
 			  ball->y = FIREBALL_DEAD;
 			  award_extra_life(3); // 300 points for killing an enemy with fireball
-			  fitness += 0.1;
+			  //fitness += 0.1;
 			  PLAY_SOUND(SOUND_HIT_ENEMY);
 			}
 		    }
@@ -2421,6 +2425,9 @@ EXPORTED double tick(uint8_t jump_key_pressed, uint8_t open_key_pressed, uint8_t
   comic_standing_still_counter *= died; // reset counter if dead
   if(comic_last_x == comic_x)
     comic_standing_still_counter++;
+  else
+    comic_standing_still_counter = 0;
+  
   comic_last_x = comic_x;
   
   // tick
@@ -3003,6 +3010,7 @@ EXPORTED void reset()
   comic_hp			=	0;
   comic_firepower		=	0;// how many Blastola Colas Comic has collected
   fireball_meter		=	0;
+
   comic_jump_power		=	4;
   comic_has_corkscrew		=	0;
   comic_has_door_key		=	0;
@@ -3034,7 +3042,7 @@ EXPORTED void reset()
   comic_y_checkpoint	=	12;
   comic_x_checkpoint	=	14;
 
-
+  comic_jump_counter = 1;
   comic_run_cycle = 0;
   comic_is_falling_or_jumping = 0;
   comic_is_teleporting = 0;

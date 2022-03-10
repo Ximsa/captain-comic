@@ -87,12 +87,12 @@ returns 2 UInt8 arrays:
     comic_facing;
         
 example: 
-julia> reshape(Comic.get_environment(instance_id)[1], 24, 20) |> transpose
+julia> reshape(Comic.get_environment(instance_id)[1:10*12], 12, 10) |> transpose
 returns the world "human readable"
 """
 function get_environment(instance_id)
-    environment = UInt8[0 for i=1:(20*24)]
-    stats = UInt8[0 for i=1:(20*24)]
+    environment = Vector{UInt8}(undef,10*12) #UInt8[0 for i=1:(20*24)]
+    stats = Vector{UInt8}(undef,14) #UInt8[0 for i=1:(20*24)]
     ccall(instances[instance_id][:get_environment], Cvoid,
           (Ptr{UInt8}, Ptr{UInt8}),
           environment, stats)
