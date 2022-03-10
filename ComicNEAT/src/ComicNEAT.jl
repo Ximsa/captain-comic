@@ -41,7 +41,7 @@ function run_individual(individual::Individual, instance_id::Int, n_output::Int)
     return last_fitness
 end
 
-generations = []
+best = nothing
 function neat_step(population::Population, gen::Int, comic_train, comic_view,  n_input, n_output, runid)
     #train players
     best_individual = nothing
@@ -63,7 +63,7 @@ function neat_step(population::Population, gen::Int, comic_train, comic_view,  n
     Comic.reset(comic_view)
     #serialize(string(runid,"_",gen), population)
     # generate next gen
-    push!(generations,Pair(deepcopy(population), deepcopy(best_individual)))
+    global best = Pair(deepcopy(population), deepcopy(best_individual))
     next_generation(population)
 end
 
