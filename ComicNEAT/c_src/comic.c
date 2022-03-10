@@ -452,14 +452,15 @@ EXPORTED void get_environment(uint8_t * environment_array, uint8_t * flags)
 	    = (foe.behavior & ~ENEMY_BEHAVIOR_FAST)+3;
       }
   }
-  /*if(!items_collected[current_level_number][current_stage_number])
+  if(!items_collected[current_level_number][current_stage_number])
     { 
       uint8_t item_x = current_stage_ptr->item_x;
       uint8_t item_y = current_stage_ptr->item_y;
-      if(item_x >= 0 && item_x < PLAYFIELD_WIDTH)
-	environment_array[(item_y/2)*PLAYFIELD_WIDTH/2 + item_x/2] = 4;
-	}*/
-      
+      int x = item_x - camera_x;
+      if(x >= 0 && x < PLAYFIELD_WIDTH)
+	environment_array[(item_y/2)*PLAYFIELD_WIDTH/2 + x/2] = 2;
+    }
+  
   // fill the flags array
   flags[0] = current_level_number;
   flags[1] = current_stage_number;
