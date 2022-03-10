@@ -7,11 +7,11 @@ end
 
 #module ComicNEAT
 using(JLD)
-include("src/Comic.jl") # make module comic "visible"
+include("Comic.jl") # make module comic "visible"
 import .Comic # do not import .Comic twice! it will reset the added instances tracking potentially resulting in a segfault
 
 
-include("src/NEAT.jl")
+include("NEAT.jl")
 using .NEAT
 
 function run_individual(individual::Individual, instance_id::Int, n_output::Int)
