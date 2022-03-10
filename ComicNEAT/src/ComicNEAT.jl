@@ -58,7 +58,7 @@ function neat_step(population::Population, gen::Int, comic_train, comic_view,  n
         end
     end
     # now every instance is evaluates, show best
-    print(run_individual(best_individual, comic_view, n_output))
+    print(floor(run_individual(best_individual, comic_view, n_output)))
     println(" generation ", gen, " fitness: ", floor(best_fitness), " species: ", length(population.species),"/",population.setting.target_species, " - ",Int(floor(population.setting.species_threshold)), "\t#nodes: ", length(best_individual.nodes), "\t#connections: ", length(filter(x->x.enabled,best_individual.connections)))
     Comic.reset(comic_view)
     #serialize(string(runid,"_",gen), population)
