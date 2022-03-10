@@ -59,14 +59,14 @@ function neat_step(population::Population, gen::Int, comic_train, comic_view,  n
     println(" generation ", gen, " fitness: ", best_fitness, " species: ", length(population.species),"/",population.setting.target_species, " - ",Int(floor(population.setting.species_threshold)), "\t#nodes: ", length(best_individual.nodes), "\t#connections: ", length(filter(x->x.enabled,best_individual.connections)))
     Comic.reset(comic_view)
     # generate next gen
-    push!(generations,deepcopy(population))
+    push!(generations,Pair(deepcopy(population), deepcopy(best_individual)))
     next_generation(population)
 end
 
 
 function test()
     # create train and view instance
-    comic_train = 6
+    comic_train = 3
     comic_view = 4
     Comic.add_instance(comic_train,0,0,1,-1)
     Comic.add_instance(comic_view,1,1,1,1)
@@ -96,4 +96,5 @@ function test()
         end
     end
 end
+
 test()
