@@ -42,8 +42,8 @@ function add_instance(instance_id, graphic=1, sound=1, skip_intro=1, speed=1)
         instances[instance_id][:get_environment] = dlsym(handle, :get_environment)
         instances[instance_id][:reset] = dlsym(handle, :reset)
         ccall(dlsym(handle, :setup), Cvoid,
-              (UInt8,UInt8,UInt8),
-              graphic,sound,skip_intro)
+              (UInt8,UInt8,UInt8,Float32),
+              graphic,sound,skip_intro,speed)
         if !Sys.iswindows() rm(file_name) end
     end
 end

@@ -2979,7 +2979,7 @@ void load_new_level()
    load_shp_files();
  }
 
-EXPORTED void setup(uint8_t graphics, uint8_t sound, uint8_t skip, double game_speed)
+EXPORTED void setup(uint8_t graphics, uint8_t sound, uint8_t skip, float game_speed)
 {
   skip_intro = skip;
   graphics_enabled = graphics;
@@ -2995,7 +2995,7 @@ EXPORTED void setup(uint8_t graphics, uint8_t sound, uint8_t skip, double game_s
 int main(int argc, char * argv[])
 {
   // parse args
-  setup(1, 1, 1, 1);//graphics_enabled, sound_enabled, 0);
+  setup(1, 1, 1, 1);//graphics_enabled, sound_enabled, 0, 1);
   game_loop();
   return 0;
 }

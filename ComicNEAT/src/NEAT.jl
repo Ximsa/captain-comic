@@ -188,10 +188,14 @@ function sort(individual::Individual)
             end
         end
     end
+    if(length(individual.connections) != length(new_connections))
+        println("warning: cycle detected, reducing from ", length(individual.connections), " to ", length(new_connections))
+    end
     individual.connections = new_connections
     return individual
 end
 
+# plots a network
 function graphplot(individual::Individual)
     # create graph
     n_nodes = 0
@@ -213,6 +217,10 @@ end
 # runs the network with given input vector
 # assumes that connections are topological sorted
 function run_network( (;fitness, nodes, connections)::Individual, inputs::Vector, n_outputs)
+    # reset values
+    for node in nodes
+        node.value = 0.0
+    end
     # keep track of when to trigger activation function
     visited = zeros(Bool,length(nodes))
     # copy inputs over
@@ -231,7 +239,16 @@ function run_network( (;fitness, nodes, connections)::Individual, inputs::Vector
         end
     end
     # read output nodes
-    return map(x -> sigmoid(x.value) > 0, nodes[length(inputs)+1:length(inputs)+n_outputs])
+    result = map(x -> sigmoid(x.value), nodes[length(inputs)+1:length(inputs)+n_outputs])
+    # you can't (souldn't) press left and right at the same time
+    left = 4
+    right = 5
+    if(result[4] > result[5])
+        result[5] = -1
+    else
+        result[4] = -1
+    end 
+    return map(x -> x > 0, result)
 end
 
 # excess connections + disjoint connections + average weight difference
