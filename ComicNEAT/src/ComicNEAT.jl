@@ -98,12 +98,12 @@ function start()
     comic_train = 3
     comic_view = 4
     Comic.add_instance(comic_train,0,0,1,-1)
-    Comic.add_instance(comic_view,1,1,1,10)
+    Comic.add_instance(comic_view,1,1,1,20)
     # create initial population
     environment = Comic.get_environment(comic_train)
     n_input = length(environment)
     n_output = 6
-    a = rand()
+    a = (rand()^2)/2
     b = rand()
     c = rand()
     d = rand()
