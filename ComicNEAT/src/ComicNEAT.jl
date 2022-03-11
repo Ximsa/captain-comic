@@ -103,10 +103,10 @@ function start()
     environment = Comic.get_environment(comic_train)
     n_input = length(environment)
     n_output = 6
-    a = (rand()^2)/2
+    a = rand()^2
     b = rand()
     c = rand()
-    d = (rand()^2)/2
+    d = rand()^2
     println(floor(a*100),"\t",floor(b*100),"\t",floor(c*100),"\t",floor(d*100))
     population = Population(n_input,n_output,a,b,c,d, 2048)
     start(population)
