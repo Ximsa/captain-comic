@@ -176,8 +176,12 @@ function sort(individual::Individual)
     # now the actual algorithm: while the stack is not empty pop an element
     # and decrement the neighbour's count.
     # if the neighbour's count reaches zero, push that connection on the stack
+    # edit: sample random element to "pop"
     while(!isempty(stack))
-        node_id = pop!(stack)
+        index = sample(1:length(stack))
+        node_id = stack[index]
+        deleteat!(stack,index)
+        #node_id = pop!(stack)
         nodes[node_id].rank = rank
         rank+=1
         for neighbour in neighbours[node_id]
