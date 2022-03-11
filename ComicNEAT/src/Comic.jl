@@ -1,6 +1,6 @@
 module Comic
 
-export add_instance, tick, get_environment, reset
+export add_instance, tick, get_environment, reset, get_environment_raw
 export instances
 
 using Base.Libc.Libdl

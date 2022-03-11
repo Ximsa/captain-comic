@@ -24,7 +24,7 @@ function run_individual(individual::Individual, instance_id::Int, n_output::Int)
     counter = 0
     Comic.tick(instance_id)
     while(true) # run player
-        environment = Comic.get_environment(instance_id)
+        environment = Comic.get_environment_raw(instance_id)
         outputs = run_network(individual, environment, n_output)
         last_fitness = fitness
         fitness = Comic.tick(instance_id,UInt8.(outputs)...)
