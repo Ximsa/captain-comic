@@ -112,4 +112,4 @@ function start()
     start(population)
 end
 
-#start()
+start()
