@@ -78,10 +78,10 @@ function test()
     environment = Comic.get_environment(comic_train)
     n_input = length(environment)
     n_output = 6
-    a = rand()
-    b = rand()
+    a = rand()/8.0
+    b = rand()/2.0
     c = rand()
-    d = rand()
+    d = rand()/2.0
     println(a," ",b," ",c, " ",d)
     population = Population(n_input,n_output,a,b,c,d, 2048)
     gen = 0
