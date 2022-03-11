@@ -433,13 +433,13 @@ EXPORTED void get_environment(uint8_t * environment_array, uint8_t * flags)
   for(int y = 0; y < MAP_HEIGHT_TILES; y++)
     for(int x = 0; x < PLAYFIELD_WIDTH/2; x++)
       environment_array[y*PLAYFIELD_WIDTH/2 + x] =
-	current_pt.tiles[y*MAP_WIDTH_TILES + (camera_x/2 + x)] > tileset_buffer.last_passable;
+	(current_pt.tiles[y*MAP_WIDTH_TILES + (camera_x/2 + x)] > tileset_buffer.last_passable) + 2;
 
   // fill the comic tiles
-  if(comic_y/2+1 < MAP_HEIGHT_TILES && (comic_x - camera_x)/2 > 0)
+  if(comic_y/2+1 < MAP_HEIGHT_TILES && (comic_x - camera_x)/2 >= 0)
     {
-      environment_array[(comic_y/2)*PLAYFIELD_WIDTH/2 + (comic_x - camera_x)/2] = 3;
-      environment_array[(comic_y/2+1)*PLAYFIELD_WIDTH/2 + (comic_x - camera_x)/2] = 3;
+      environment_array[(comic_y/2)*PLAYFIELD_WIDTH/2 + (comic_x - camera_x)/2] = 4;
+      environment_array[(comic_y/2+1)*PLAYFIELD_WIDTH/2 + (comic_x - camera_x)/2] = 4;
     }
   // fill enemy tiles
   for(int i = 0; i < MAX_NUM_ENEMIES; i++){
@@ -449,7 +449,7 @@ EXPORTED void get_environment(uint8_t * environment_array, uint8_t * flags)
 	int x = (foe.x - camera_x);
 	if(x >= 0 && x < PLAYFIELD_WIDTH)
 	  environment_array[(foe.y/2)*PLAYFIELD_WIDTH/2 + x/2]
-	    = (foe.behavior & ~ENEMY_BEHAVIOR_FAST)+3;
+	    = (foe.behavior & ~ENEMY_BEHAVIOR_FAST)+4;
       }
   }
   if(!items_collected[current_level_number][current_stage_number])
@@ -458,7 +458,16 @@ EXPORTED void get_environment(uint8_t * environment_array, uint8_t * flags)
       uint8_t item_y = current_stage_ptr->item_y;
       int x = item_x - camera_x;
       if(x >= 0 && x < PLAYFIELD_WIDTH)
-	environment_array[(item_y/2)*PLAYFIELD_WIDTH/2 + x/2] = 2;
+	environment_array[(item_y/2)*PLAYFIELD_WIDTH/2 + x/2] = 1;
+    }
+  // fill door tiles
+  stage current_stage = current_level.stages[current_stage_number];
+  for(size_t door_id = 0; door_id < MAX_NUM_DOORS; door_id++)
+    {
+      uint8_t door_x = current_stage.doors[door_id].x - camera_x;
+      uint8_t door_y = current_stage.doors[door_id].y;
+      if(door_x >= 0 && door_x < PLAYFIELD_WIDTH)
+	environment_array[(door_y/2)*PLAYFIELD_WIDTH/2 + door_x/2] = 0;
     }
   
   // fill the flags array
@@ -2185,6 +2194,7 @@ void activate_door(door source_door)
 //   fireball_meter_counter = 2
 void comic_dies(uint8_t death_by_hp)
 {
+  fitness = NAN;
   blit_map_playfield_offscreen();
   if(!death_by_hp)blit_comic_playfield_offscreen();
   wait_n_ticks(2);
