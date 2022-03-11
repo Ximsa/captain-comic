@@ -117,7 +117,7 @@ function center_environment(environment::Vector{Float32})
     comic_y = 0
     for y = 1:size(view,2)
         for x = 1:size(view,1)
-            if(view[x,y] == 3)
+            if(view[x,y] == 4)
                 view[x,y] = 0
                 comic_x = x
                 comic_y = y
@@ -163,6 +163,16 @@ function get_environment(instance_id)
           environment, stats)
     # environment ranges from 0 to 255
     return [center_environment(Float32.(environment)) ; Float32.(stats)]
+end
+
+function get_environment_raw(instance_id)
+    environment = Vector{UInt8}(undef,10*12) #UInt8[0 for i=1:(20*24)]
+    stats = Vector{UInt8}(undef,14) #UInt8[0 for i=1:(20*24)]
+    ccall(instances[instance_id][:get_environment], Cvoid,
+          (Ptr{UInt8}, Ptr{UInt8}),
+          environment, stats)
+    # environment ranges from 0 to 255
+    return [Float32.(environment) ; Float32.(stats)]
 end
 
 

@@ -10,11 +10,11 @@ using(JLD)
 using Serialization
 
 
-include("Comic.jl") # make module comic "visible"
+include("src/Comic.jl") # make module comic "visible"
 import .Comic # do not import .Comic twice! it will reset the added instances tracking potentially resulting in a segfault
 
 
-include("NEAT.jl")
+include("src/NEAT.jl")
 using .NEAT
 
 function run_individual(individual::Individual, instance_id::Int, n_output::Int)
@@ -112,4 +112,4 @@ function start()
     start(population)
 end
 
-start()
+#start()
