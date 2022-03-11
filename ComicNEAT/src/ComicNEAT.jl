@@ -106,7 +106,7 @@ function start()
     a = (rand()^2)/2
     b = rand()
     c = rand()
-    d = rand()
+    d = (rand()^2)/2
     println(floor(a*100),"\t",floor(b*100),"\t",floor(c*100),"\t",floor(d*100))
     population = Population(n_input,n_output,a,b,c,d, 2048)
     start(population)
