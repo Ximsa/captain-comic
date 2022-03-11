@@ -118,7 +118,7 @@ function center_environment(environment::Vector{Float32})
     for y = 1:size(view,2)
         for x = 1:size(view,1)
             if(view[x,y] == 3)
-                view[x,y] = 9
+                view[x,y] = 0
                 comic_x = x
                 comic_y = y
             end
