@@ -81,7 +81,7 @@ function shift_lr(A::AbstractMatrix, k::Integer)
     if abs(k) > n
         @error "Cannot shift matrix with $n columns by $k columns"
     end
-    fill_val = -1 #(k > 0 ? A[1] : A[end])
+    fill_val = (k > 0 ? A[1] : A[end])
     F = fill(fill_val, m, abs(k))
     B = (k > 0 ? [F A[:, 1:(n - k)]] : [A[:, (abs(k) + 1):n] F])
     return B
@@ -100,7 +100,7 @@ function shift_ud(A::AbstractMatrix, k::Integer)
     if abs(k) > m
         @error "Cannot shift matrix with $m rows by $k rows."
     end
-    fill_val = -1 # = (k > 0 ? A[1] : A[end])
+    fill_val = (k > 0 ? A[1] : A[end])
     F = fill(fill_val, abs(k), n)
     B = (k > 0 ? [A[(k + 1):m, :]; F] : [F; A[1:(m - abs(k)), :]])
     return B
@@ -126,7 +126,7 @@ function center_environment(environment::Vector{Float32})
     end
     comic_x -= Int(floor(size(view,1)/2))
     comic_y -= Int(floor(size(view,2)/2))
-    return vec(shift_lr(shift_ud(view,comic_x),-comic_y))
+    return vec(shift_ud(shift_lr(view,-comic_y),comic_x))
 end
 
 """

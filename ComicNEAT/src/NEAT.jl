@@ -93,7 +93,7 @@ mutable struct Population
     setting::Setting
     species::Vector{Species}
     function Population(input_nodes, output_nodes, connectivity = 0.2, weight_mutation=1, connection_mutation=1, node_mutation=1, population_size=768, weight_range=20.0)
-        target_species = Int(floor(population_size^(1.0/3)))
+        target_species = Int(floor(population_size^(1.0/2)))
         # create setting struct
         setting = Setting(0,Dict(),population_size,weight_range,10.0,
                           target_species, connectivity, input_nodes, output_nodes,
@@ -146,7 +146,8 @@ Base.show(io::IO, x::Species) = print("# individuals:\t", length(x.individuals),
                                       "\nnot improved since ", x.gens_since_improved, " generations\n")
 # make Node sortable - sort by id
 isless(a::Node, b::Node) = a.id < b.id
-
+#make Connection sortable by  innovation id
+isless(a::Connection, b::Connection) = a.innovation_id<b.innovation_id
 
 # make Individual topological sortable
 # sets rank in nodes
@@ -376,6 +377,9 @@ end
 function crossover(a::Individual, b::Individual)
     a, b = a.fitness > b.fitness ? (a, b) : (b, a)
     result = deepcopy(a)
+    if(rand() < 0.1)
+        return result
+    end
     as = a.connections
     bs = b.connections
     ai = 1
@@ -505,6 +509,10 @@ function perform_crossover_and_mutation(population::Population)
         if(length(individuals) > 1) # elitism: keep best individual - but only if the species has more than 1 individual
             push!(next_individuals, deepcopy(reset_values(argmax(x->x.fitness, individuals))))
             offset+=1
+        end
+        # sort by innovation id
+        for individual in kind.individuals
+            sort!(individual.connections)
         end
         for i in offset:kind.n_offspring
             push!(next_individuals, sort(reset_values(mutate(crossover(sample(individuals, weights, 2)...), population.setting))))
