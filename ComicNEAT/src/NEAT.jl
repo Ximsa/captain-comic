@@ -384,10 +384,10 @@ function has_connection(node_a_id, node_b_id, connections::Vector{Connection})
     return false
 end
 
-# 50% adds a connection,  25% removes connection, 25% toggles an existing connection on or off
+# 40% adds a connection,  30% removes connection, 30% toggles an existing connection on or off
 function mutate_connection(individual::Individual,setting::Setting)
     decision = rand()
-    if(decision < 0.33 || length(individual.connections) < 3) # add connection
+    if(decision < 0.40 || length(individual.connections) < 3) # add connection
         for i in 1:20 # retry up to 20 times
             node_a_id, node_b_id = sample(1:length(individual.nodes),2,replace=false)
             node_a_id, node_b_id = individual.nodes[node_a_id].rank < individual.nodes[node_b_id].rank ? (node_a_id, node_b_id) : (node_b_id, node_a_id)
@@ -403,7 +403,7 @@ function mutate_connection(individual::Individual,setting::Setting)
                 break
             end
         end
-    elseif(decision < 0.66) # toggle connection
+    elseif(decision < 0.70) # toggle connection
         index = sample(1:length(individual.connections))
         individual.connections[index].enabled = !individual.connections[index].enabled
     else # remove connection
