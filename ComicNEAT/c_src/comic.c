@@ -698,7 +698,7 @@ void collect_gold()
 //   score = increased by 2000 points
 void collect_item()
 {
-  fitness += 42; // item gives 2000 points
+  fitness += 2000; // item gives 2000 points
   PLAY_SOUND(SOUND_COLLECT_ITEM);
   award_points(20);
   // Mark item as collected in items_collected.

@@ -422,6 +422,9 @@ function mutate_connection(individual::Individual,setting::Setting)
                 || has_connection(node_a_id, node_b_id, individual.connections))
                 continue
             else  # valid connection
+                if(rand()<0.01 && individual.nodes[node_a_id].type == hidden && individual.nodes[node_b_id].type == hidden) # rare chance of creating a cycle - effectively deletes node a and b
+                    node_a_id, node_b_id = node_b_id, node_a_id
+                end
                 push!(individual.connections, Connection(
                     setting, node_a_id, node_b_id,
                     (2*setting.weight_range)*rand() - setting.weight_range, true))
