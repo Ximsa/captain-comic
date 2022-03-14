@@ -1,6 +1,6 @@
 module Comic
 
-export add_instance, tick, get_environment, reset
+export add_instance, tick, get_environment, reset, get_environment_raw
 export instances
 
 using Base.Libc.Libdl
@@ -42,8 +42,8 @@ function add_instance(instance_id, graphic=1, sound=1, skip_intro=1, speed=1)
         instances[instance_id][:get_environment] = dlsym(handle, :get_environment)
         instances[instance_id][:reset] = dlsym(handle, :reset)
         ccall(dlsym(handle, :setup), Cvoid,
-              (UInt8,UInt8,UInt8),
-              graphic,sound,skip_intro)
+              (UInt8,UInt8,UInt8,Float32),
+              graphic,sound,skip_intro,speed)
         if !Sys.iswindows() rm(file_name) end
     end
 end
@@ -62,6 +62,71 @@ function tick(instance_id, jump=0,
     return ccall(instances[instance_id][:tick], Cdouble,
                  (UInt8,UInt8,UInt8,UInt8,UInt8,UInt8,UInt8),
                  jump, open_door, teleport, left, right, 0, fire)
+end
+
+
+
+
+"""
+    B = shift_lr(A, k)
+Shift `A` by `k` columns. If `k` is positive, shift to the
+    right by inserting `k` columns on the left. If `k` is
+    negative, shift to the left by inserting `k` columns
+    on the right.
+source: https://gist.github.com/kersulis/da5b4085e09ace35ce3e94416bf918e3
+"""
+function shift_lr(A::AbstractMatrix, k::Integer)
+    k == 0 && return A
+    m, n = size(A)
+    if abs(k) > n
+        @error "Cannot shift matrix with $n columns by $k columns"
+    end
+    fill_val = (k > 0 ? A[1] : A[end])
+    F = fill(fill_val, m, abs(k))
+    B = (k > 0 ? [F A[:, 1:(n - k)]] : [A[:, (abs(k) + 1):n] F])
+    return B
+end
+
+"""
+Shift `A` by `k` rows. If `k` is positive, shift upward by
+    inserting `k` rows on the bottom. If `k` is
+    negative, shift downward by inserting `k` rows
+    on top.
+source: https://gist.github.com/kersulis/da5b4085e09ace35ce3e94416bf918e3
+"""
+function shift_ud(A::AbstractMatrix, k::Integer)
+    k == 0 && return A
+    m, n = size(A)
+    if abs(k) > m
+        @error "Cannot shift matrix with $m rows by $k rows."
+    end
+    fill_val = (k > 0 ? A[1] : A[end])
+    F = fill(fill_val, abs(k), n)
+    B = (k > 0 ? [A[(k + 1):m, :]; F] : [F; A[1:(m - abs(k)), :]])
+    return B
+end
+
+"""
+center_environment(environment::Vector{Float32})
+
+centers the environment around comic
+"""
+function center_environment(environment::Vector{Float32})
+    view = reshape(environment, 12, 10)
+    comic_x = 0
+    comic_y = 0
+    for y = 1:size(view,2)
+        for x = 1:size(view,1)
+            if(view[x,y] == 4)
+                view[x,y] = 0
+                comic_x = x
+                comic_y = y
+            end
+        end
+    end
+    comic_x -= Int(floor(size(view,1)/2))
+    comic_y -= Int(floor(size(view,2)/2))
+    return vec(shift_ud(shift_lr(view,-comic_y),comic_x))
 end
 
 """
@@ -97,8 +162,21 @@ function get_environment(instance_id)
           (Ptr{UInt8}, Ptr{UInt8}),
           environment, stats)
     # environment ranges from 0 to 255
+    return [center_environment(Float32.(environment)) ; Float32.(stats)]
+end
+
+function get_environment_raw(instance_id)
+    environment = Vector{UInt8}(undef,10*12) #UInt8[0 for i=1:(20*24)]
+    stats = Vector{UInt8}(undef,14) #UInt8[0 for i=1:(20*24)]
+    ccall(instances[instance_id][:get_environment], Cvoid,
+          (Ptr{UInt8}, Ptr{UInt8}),
+          environment, stats)
+    # environment ranges from 0 to 255
     return [Float32.(environment) ; Float32.(stats)]
 end
+
+
+
 
 """
 reset(instance_id)

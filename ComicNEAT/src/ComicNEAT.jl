@@ -24,7 +24,7 @@ function run_individual(individual::Individual, instance_id::Int, n_output::Int)
     counter = 0
     Comic.tick(instance_id)
     while(true) # run player
-        environment = Comic.get_environment(instance_id)
+        environment = Comic.get_environment_raw(instance_id)
         outputs = run_network(individual, environment, n_output)
         last_fitness = fitness
         fitness = Comic.tick(instance_id,UInt8.(outputs)...)
@@ -42,7 +42,7 @@ function run_individual(individual::Individual, instance_id::Int, n_output::Int)
 end
 
 best = nothing
-function neat_step(population::Population, gen::Int, comic_train, comic_view,  n_input, n_output, runid)
+function neat_step(population::Population, gen::Int, comic_train, comic_view,  n_input, n_output)
     #train players
     best_individual = nothing
     best_fitness = 0
@@ -61,37 +61,28 @@ function neat_step(population::Population, gen::Int, comic_train, comic_view,  n
     print(floor(run_individual(best_individual, comic_view, n_output)))
     println(" generation ", gen, " fitness: ", floor(best_fitness), " species: ", length(population.species),"/",population.setting.target_species, " - ",Int(floor(population.setting.species_threshold)), "\t#nodes: ", length(best_individual.nodes), "\t#connections: ", length(filter(x->x.enabled,best_individual.connections)))
     Comic.reset(comic_view)
-    #serialize(string(runid,"_",gen), population)
     # generate next gen
     global best = Pair(deepcopy(population), deepcopy(best_individual))
     next_generation(population)
 end
 
 
-function test()
+function start(population::Population)
     # create train and view instance
     comic_train = 3
     comic_view = 4
     Comic.add_instance(comic_train,0,0,1,-1)
-    Comic.add_instance(comic_view,1,1,1,1)
-    # create initial population
+    Comic.add_instance(comic_view,1,1,1,10)
     environment = Comic.get_environment(comic_train)
     n_input = length(environment)
     n_output = 6
-    a = rand()
-    b = rand()
-    c = rand()
-    d = rand()
-    println(a," ",b," ",c, " ",d)
-    population = Population(n_input,n_output,a,b,c,d, 2048)
     gen = 0
     last_best_fitness = 0
-    runid = string("runs/",floor(a*100),"-",floor(b*100),"-",floor(c*100),"-",floor(d*100))
     try
         while(true) # for every generation
-            neat_step(population, gen, comic_train, comic_view, n_input, n_output, runid)
+            neat_step(population, gen, comic_train, comic_view, n_input, n_output)
             gen+=1
-            ccall(:jl_gc_collect, Cvoid, (Cint,), 1)
+            ccall(:jl_gc_collect, Cvoid, (Cint,), 1) # keep memory usage (hopefully) a bit lower
         end
     catch e
         if e isa InterruptException
@@ -103,4 +94,22 @@ function test()
     end
 end
 
-test()
+function start()
+    comic_train = 3
+    comic_view = 4
+    Comic.add_instance(comic_train,0,0,1,-1)
+    Comic.add_instance(comic_view,1,1,1,20)
+    # create initial population
+    environment = Comic.get_environment(comic_train)
+    n_input = length(environment)
+    n_output = 6
+    a = rand()^2
+    b = rand()
+    c = rand()
+    d = rand()^2
+    println(floor(a*100),"\t",floor(b*100),"\t",floor(c*100),"\t",floor(d*100))
+    population = Population(n_input,n_output,a,b,c,d, 2048)
+    start(population)
+end
+
+start()
