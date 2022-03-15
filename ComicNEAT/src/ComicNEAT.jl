@@ -10,11 +10,11 @@ using(JLD)
 using Serialization
 
 
-include("Comic.jl") # make module comic "visible"
+include("src/Comic.jl") # make module comic "visible"
 import .Comic # do not import .Comic twice! it will reset the added instances tracking potentially resulting in a segfault
 
 
-include("NEAT.jl")
+include("src/NEAT.jl")
 using .NEAT
 
 function run_individual(individual::Individual, instance_id::Int, n_output::Int)
@@ -24,7 +24,7 @@ function run_individual(individual::Individual, instance_id::Int, n_output::Int)
     counter = 0
     Comic.tick(instance_id)
     while(true) # run player
-        environment = Comic.get_environment(instance_id)
+        environment = Comic.get_environment_raw(instance_id)
         outputs = run_network(individual, environment, n_output)
         last_fitness = fitness
         fitness = Comic.tick(instance_id,UInt8.(outputs)...)
@@ -112,4 +112,4 @@ function start()
     start(population)
 end
 
-start()
+#start()
