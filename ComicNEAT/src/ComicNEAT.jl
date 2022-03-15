@@ -24,7 +24,7 @@ function run_individual(individual::Individual, instance_id::Int, n_output::Int)
     counter = 0
     Comic.tick(instance_id)
     while(true) # run player
-        environment = Comic.get_environment_raw(instance_id)
+        environment = Comic.get_environment(instance_id)
         outputs = run_network(individual, environment, n_output)
         last_fitness = fitness
         fitness = Comic.tick(instance_id,UInt8.(outputs)...)
@@ -59,7 +59,7 @@ function neat_step(population::Population, gen::Int, comic_train, comic_view,  n
     end
     # now every instance is evaluates, show best
     print(floor(run_individual(best_individual, comic_view, n_output)))
-    println(" generation ", gen, " fitness: ", floor(best_fitness), " species: ", length(population.species),"/",population.setting.target_species, " - ",Int(floor(population.setting.species_threshold)), "\t#nodes: ", length(best_individual.nodes), "\t#connections: ", length(filter(x->x.enabled,best_individual.connections)))
+    println(" generation ", gen, " fitness: ", floor(best_fitness), " species: ", length(population.species),"/",population.setting.target_species, " - ",Int(floor(population.setting.species_threshold)), "\t#nodes: ", length(best_individual.nodes), "\t#connections: ", length(filter(x->x.enabled,best_individual.connections)), " #inno: ", population.setting.innovation_counter )
     Comic.reset(comic_view)
     # generate next gen
     global best = Pair(deepcopy(population), deepcopy(best_individual))
@@ -103,10 +103,10 @@ function start()
     environment = Comic.get_environment(comic_train)
     n_input = length(environment)
     n_output = 6
-    a = rand()^2
+    a = 0# rand()
     b = rand()
     c = rand()
-    d = rand()^2
+    d = rand()^4
     println(floor(a*100),"\t",floor(b*100),"\t",floor(c*100),"\t",floor(d*100))
     population = Population(n_input,n_output,a,b,c,d, 2048)
     start(population)

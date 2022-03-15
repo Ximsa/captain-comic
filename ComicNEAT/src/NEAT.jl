@@ -423,7 +423,7 @@ function mutate_connection(individual::Individual,setting::Setting)
                 continue
             else  # valid connection
                 if(rand()<0.01 && individual.nodes[node_a_id].type == hidden && individual.nodes[node_b_id].type == hidden) # rare chance of creating a cycle - effectively deletes node a and b
-                    node_a_id, node_b_id = node_b_id, node_a_id
+                    #node_a_id, node_b_id = node_b_id, node_a_id
                 end
                 push!(individual.connections, Connection(
                     setting, node_a_id, node_b_id,
@@ -441,18 +441,19 @@ function mutate_connection(individual::Individual,setting::Setting)
 end
 
 function mutate_connections(individual::Individual,setting::Setting)
-    for i in 1:Int(floor(rand()*12))
+    for i in 1:Int(floor(rand()*4)) # mutate up to 3 connections
         mutate_connection(individual::Individual,setting::Setting)
     end
 end
 
-# 90% modify weight by up to 20%, 10% new weight, 50% chance for a connection to be selected
+# 90% modify weight by up to 20%, 10% new weight, up to 3 times
 function mutate_weight(individual::Individual,setting::Setting)
-    if(length(individual.connections) > 0)
-        indices = sample(1:length(individual.connections), Int(floor(length(individual.connections)/2)), replace=false)
+    num_weights = Int(floor(rand()*4))
+    if(length(individual.connections) >= num_weights)
+        indices = sample(1:length(individual.connections), num_weights, replace=false)
         for index in indices
             if(rand() < 0.9) # modify
-                individual.connections[index].weight *= rand()*0.2
+                individual.connections[index].weight += individual.connections[index].weight*(0.5-rand())*0.4
             else  # new weight
                 individual.connections[index].weight = (2*setting.weight_range)*rand() - setting.weight_range
             end
