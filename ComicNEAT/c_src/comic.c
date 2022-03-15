@@ -22,7 +22,6 @@ SDL_Texture * texture = NULL;
 SDL_Palette * palette = NULL;
 int comic_quit = 0;
 
-
 uint8_t screen_buffer[SCREEN_WIDTH*SCREEN_HEIGHT*4];
 uint8_t ega_buffer[SCREEN_WIDTH*SCREEN_HEIGHT/2];
 Uint16 audio_buffer[SOUND_MAX_LENGTH * SAMPLE_RATE * sizeof(Uint16)];
@@ -324,9 +323,9 @@ void award_extra_life(uint8_t sound)
   if(comic_num_lives == 5) // already the maximum number of lives?
     {
       comic_hp_pending_increase = MAX_HP;
-      award_points(75);
-      award_points(75);
-      award_points(75);
+      //award_points(75);
+      //award_points(75);
+      //award_points(75);
     }
   else
     {
@@ -700,7 +699,7 @@ void collect_item()
 {
   fitness += 21; // item gives 2000 points
   PLAY_SOUND(SOUND_COLLECT_ITEM);
-  award_points(20);
+  award_points(21);
   // Mark item as collected in items_collected.
   items_collected[current_level_number][current_stage_number] = 1;
   uint8_t item = current_stage_ptr->item_type;
@@ -1835,12 +1834,13 @@ void decrement_comic_hp()
   PLAY_SOUND(SOUND_DAMAGE);
   if(comic_hp != 0)
     {
-      comic_hp--;
+      
       blit(8, 16, // width and height
 	   0, 0, // source x and y
 	   240+comic_hp*8+1, 82, // target x and y 
 	   8, GRAPHIC_METER_EMPTY, // source buffer
 	   SCREEN_WIDTH, screen_buffer); // target buffer
+      comic_hp--;
     }
 }
 
@@ -1853,7 +1853,7 @@ void increment_comic_hp()
 {
   if(comic_hp == MAX_HP)
     { // overcharge, award 1800 points
-      award_points(18);
+      //award_points(18);
     }
   else
     { // Add a unit to the HP meter in the UI.
@@ -2426,6 +2426,7 @@ EXPORTED double tick(uint8_t jump_key_pressed, uint8_t open_key_pressed, uint8_t
     {
       visited_places[current_level_number][current_stage_number][comic_x]=1;
       fitness+=1.0;
+      award_points(1);
     }
   
   // pretend we're still respsonive
