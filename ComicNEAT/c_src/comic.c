@@ -698,7 +698,7 @@ void collect_gold()
 //   score = increased by 2000 points
 void collect_item()
 {
-  fitness += 2000; // item gives 2000 points
+  fitness += 21; // item gives 2000 points
   PLAY_SOUND(SOUND_COLLECT_ITEM);
   award_points(20);
   // Mark item as collected in items_collected.
@@ -1318,7 +1318,7 @@ void handle_enemies()
 		  // he's taking hits while inhibit_death_by_enemy_collision != 0.)
 		  decrement_comic_hp();
 		  if(fitness > 10)
-		    fitness-=3;
+		    fitness-= 10;
 		  goto dying;
 		}
 	      else
