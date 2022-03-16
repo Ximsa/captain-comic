@@ -5,6 +5,7 @@ using GLMakie
 using Graphs
 using GraphMakie
 #using GraphRecipes
+using NetworkLayout
 using Plots
 using StatsBase
 using LayeredLayouts
@@ -216,7 +217,8 @@ function graphplot(individual::Individual)
     #xs, ys, paths = solve_positions(Zarate(), graph);
     # plot graph
     #lay = _ -> Point.(zip(xs,ys))
-    graphplot(graph, nlabels=(map(string,1:length(individual.nodes))[1:n_nodes]))
+    lay = SquareGrid()
+    graphplot(graph, nlabels=(map(string,1:length(individual.nodes))[1:n_nodes]), layout = lay)
 end
 
 # runs the network with given input vector
