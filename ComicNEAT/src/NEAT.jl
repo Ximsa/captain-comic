@@ -96,7 +96,7 @@ mutable struct Population
     function Population(input_nodes, output_nodes, connectivity = 0.2, weight_mutation=1, connection_mutation=1, node_mutation=1, population_size=768, weight_range=20.0)
         target_species = Int(floor(population_size^(1.0/2)))
         # create setting struct
-        setting = Setting(0,Dict(),population_size,weight_range,10.0,
+        setting = Setting(0,Dict(),population_size,weight_range,50.0,
                           target_species, connectivity, input_nodes, output_nodes,
                           weight_mutation, connection_mutation, node_mutation)
         # generate individuals from setting
@@ -120,7 +120,7 @@ function Individual(setting::Setting)
         if(rand() < setting.connectivity || first)
             first = false
             push!(connections, Connection(
-                setting, id, sample(setting.input_n+1:setting.input_n+setting.output_n+1),
+                setting, sample(1:setting.input_n), sample(setting.input_n+1:setting.input_n+setting.output_n+1),
                 (2*setting.weight_range)*rand() - setting.weight_range, true))
         end
     end
@@ -354,7 +354,7 @@ function survivor_selection(population::Population)
             end
             individual.fitness /= size
             # prefer growing individuals
-            individual.fitness /= 1+(population.species[species_id].gens_since_improved / 12.0)
+            individual.fitness /= 1+(population.species[species_id].gens_since_improved)
             sum_fitness += individual.fitness
             species_fitness[species_id] += individual.fitness
         end
@@ -411,10 +411,10 @@ function has_connection(node_a_id, node_b_id, connections::Vector{Connection})
     return false
 end
 
-# 50% adds a connection,  20% removes connection, 30% toggles an existing connection on or off
+# 70% adds a connection, 30% toggles an existing connection on or off
 function mutate_connection(individual::Individual,setting::Setting)
     decision = rand()
-    if(decision < 0.50 || length(individual.connections) < 3) # add connection
+    if(decision < 0.70 || length(individual.connections) < 3) # add connection
         for i in 1:20 # retry up to 20 times
             node_a_id, node_b_id = sample(1:length(individual.nodes),2,replace=false)
             node_a_id, node_b_id = individual.nodes[node_a_id].rank < individual.nodes[node_b_id].rank ? (node_a_id, node_b_id) : (node_b_id, node_a_id)
@@ -433,7 +433,7 @@ function mutate_connection(individual::Individual,setting::Setting)
                 break
             end
         end
-    elseif(decision < 0.80) # toggle connection
+    elseif(decision < 1) # toggle connection
         index = sample(1:length(individual.connections))
         individual.connections[index].enabled = !individual.connections[index].enabled
     else # remove connection
@@ -509,7 +509,7 @@ end
 function perform_crossover_and_mutation(population::Population)
     for kind in population.species
         individuals = kind.individuals
-        weights = Weights(map(individual->(individual.fitness+1)^2, individuals))
+        weights = Weights(map(individual->individual.fitness, individuals))
         next_individuals = []
         offset = 1
         if(length(individuals) > 1) # elitism: keep best individual - but only if the species has more than 1 individual

@@ -10,11 +10,11 @@ using(JLD)
 using Serialization
 
 
-include("src/Comic.jl") # make module comic "visible"
+include("Comic.jl") # make module comic "visible"
 import .Comic # do not import .Comic twice! it will reset the added instances tracking potentially resulting in a segfault
 
 
-include("src/NEAT.jl")
+include("NEAT.jl")
 using .NEAT
 
 function run_individual(individual::Individual, instance_id::Int, n_output::Int)
@@ -108,8 +108,8 @@ function start()
     c = rand()
     d = rand()^4
     println(floor(a*100),"\t",floor(b*100),"\t",floor(c*100),"\t",floor(d*100))
-    population = Population(n_input,n_output,a,b,c,d, 2048)
+    population = Population(n_input,n_output,a,b,c,d, 512)
     start(population)
 end
 
-#start()
+start()
